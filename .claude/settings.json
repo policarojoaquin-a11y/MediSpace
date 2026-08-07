@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Bash(awk '{print $5}')"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Glob|Grep|Bash|Agent|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"try{require('fs').accessSync('graphify-out/graph.json');process.stdout.write(Buffer.from('eyJob29rU3BlY2lmaWNPdXRwdXQiOnsiaG9va0V2ZW50TmFtZSI6IlByZVRvb2xVc2UiLCJhZGRpdGlvbmFsQ29udGV4dCI6IlNUT1AuIFRoaXMgcHJvamVjdCBoYXMgYSBncmFwaGlmeS10cyBrbm93bGVkZ2UgZ3JhcGguIFVzZSB0aGUgZ3JhcGggdG9vbCB0aGF0IG1hdGNoZXMgdGhlIHF1ZXN0aW9uOiByZXRyaWV2ZSBmb3IgZGlyZWN0IGNvZGViYXNlIHF1ZXN0aW9ucywgcmVsZXZhbnRfZmlsZXMgZm9yIHdoZXJlIHRvIG9wZW4gZmlyc3QsIGZlYXR1cmVfbWFwIGZvciB0aGUgbWFpbiBhcmVhcyBhbmQgZW50cnkgcG9pbnRzLCByaXNrX21hcCBiZWZvcmUgZWRpdGluZywgaW1wbGVtZW50YXRpb25fY2hlY2tsaXN0IGZvciBlZGl0IG9yZGVyIGFuZCB2YWxpZGF0aW9uLCBhbmQgaW1wYWN0IGZvciBibGFzdCByYWRpdXMuIEdyYXBoaWZ5IGFuc3dlcnMgbW9zdCBjb2RlYmFzZSBxdWVzdGlvbnMgaW4gMSBmb2N1c2VkIE1DUCBjYWxsIGluc3RlYWQgb2YgNeKAkzEwIHNlcXVlbnRpYWwgZmlsZSByZWFkcyAoM3ggZmV3ZXIgdHVybnMsIH4yLjh4IGZhc3RlciBvbiBhIHJlYWwgcHJvZHVjdGlvbiBjb2RlYmFzZSkuIERvIG5vdCB1c2UgR2xvYiwgR3JlcCwgQmFzaCwgUmVhZCwgb3IgQWdlbnQgdG9vbHMgZmlyc3QuIE9ubHkgZmFsbCBiYWNrIHRvIHJhdyBmaWxlIHRvb2xzIGlmIHRoZSBncmFwaCB0b29scyBjYW5ub3QgYW5zd2VyIHRoZSBxdWVzdGlvbiBvciB0aGUgTUNQIHNlcnZlciBpcyB1bmF2YWlsYWJsZS4ifX0=','base64').toString())}catch(e){}\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+# Maven
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+log.txt
+docs/run_log.txt
+
+# Env / secrets
+.env
+.env.*
+
+# graphify-ts
+graphify-out/

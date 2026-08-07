@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=MediSpace;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: YourStrong!Passw0rd
+    driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+  
+  sql:
+    init:
+      mode: never
+      schema-locations: classpath:db/schema.sql
+
+server:
+  port: 8080
+
+jwt:
+  # Solo para desarrollo local. En cualquier despliegue real, setear la variable de entorno
+  # JWT_SECRET con un valor propio (no usar el default del repo).
+  secret: ${JWT_SECRET:EstaEsUnaClaveSecretaMuyLargaParaConsultoriosMitre123!@#}

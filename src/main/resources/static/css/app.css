@@ -1,0 +1,371 @@
+/* ========================
+   App Shell Layout
+   Sidebar + Topbar + Content
+   ======================== */
+
+/* ---- Shell wrapper ---- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--gris-claro);
+}
+
+/* ========================
+   SIDEBAR
+   ======================== */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--azul);
+  background-image:
+    radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+  border-right: 3px solid var(--azul-dim);
+  transition: width .25s ease, transform .25s ease;
+  box-shadow: 2px 0 8px rgba(0,0,0,.15);
+}
+
+/* Brand */
+.sidebar-brand {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  min-height: 64px;
+}
+.sidebar-logo {
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(255,255,255,.95);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.sidebar-logo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.sidebar-brand-name {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600; color: #fff;
+  letter-spacing: -.2px;
+  white-space: nowrap;
+}
+.sidebar-brand-sub {
+  font-size: 10px; color: rgba(255,255,255,.6);
+  letter-spacing: .5px; text-transform: uppercase;
+}
+
+/* User mini-card */
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.sidebar-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.sidebar-user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-user-role {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: .4px; color: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.12);
+  border-left: 2px solid var(--naranja);
+  padding: 1px 7px; border-radius: var(--r-xs);
+  display: inline-block; margin-top: 2px;
+}
+
+/* Nav */
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+.sidebar-section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: rgba(255,255,255,.4);
+  padding: 12px 12px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r-xs);
+  border-left: 2px solid transparent;
+  color: rgba(255,255,255,.8);
+  font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, padding-left .15s ease;
+  user-select: none;
+  margin-bottom: 1px;
+  white-space: nowrap;
+}
+.nav-item:hover { background: rgba(255,255,255,.1); color: #fff; padding-left: 15px; }
+.nav-item.active { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; border-left-color: var(--naranja); }
+.nav-item svg { flex-shrink: 0; opacity: .75; }
+.nav-item.active svg, .nav-item:hover svg { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,.2);
+  color: #fff; font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  min-width: 20px; height: 20px;
+  border-radius: var(--r-xs); display: flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+}
+.nav-badge.orange { background: var(--naranja); }
+
+/* Footer */
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.sidebar-logout {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.7);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all .15s ease;
+  width: 100%; background: none; border: none;
+  font-family: var(--font);
+}
+.sidebar-logout:hover { background: rgba(192,57,43,.25); color: #fff; }
+
+/* ========================
+   TOPBAR
+   ======================== */
+.topbar {
+  position: fixed;
+  top: 0; left: var(--sidebar-w); right: 0;
+  height: var(--topbar-h);
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris-borde);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  z-index: 99;
+  box-shadow: var(--shadow-xs);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-breadcrumb { font-family: var(--font-display); font-size: 15.5px; font-weight: 600; color: var(--azul); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 12.5px; font-family: var(--font-mono); color: var(--clr-text-muted); }
+.topbar-user-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  background: var(--gris-claro);
+  border: 1px solid var(--gris-borde);
+  border-left: 2px solid var(--azul);
+  border-radius: var(--r-xs);
+  font-size: 12.5px; font-weight: 600; color: var(--clr-text);
+  cursor: default;
+}
+
+/* Hamburger for mobile */
+.sidebar-toggle {
+  display: none;
+  background: none; border: none;
+  color: var(--clr-text); cursor: pointer;
+  padding: 4px;
+}
+
+/* ========================
+   MAIN CONTENT
+   ======================== */
+.main-content {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  flex: 1;
+  padding: 28px;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+/* ========================
+   MODULE VIEWS
+   ======================== */
+.module-view { display: none; }
+.module-view.active { display: block; }
+
+/* ========================
+   ARRENDAMIENTO — grid de consultorios
+   ======================== */
+.consultorios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-4);
+}
+.consultorio-card {
+  background: var(--blanco);
+  border: 1px solid var(--clr-border);
+  border-left: 3px solid var(--gris-borde-2);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.consultorio-card.ocupado { border-left-color: var(--azul); }
+.consultorio-card.disponible { border-left-color: var(--verde); }
+.consultorio-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--gris-claro);
+  border-bottom: 1px solid var(--clr-border);
+}
+.consultorio-numero {
+  font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--clr-text);
+}
+.consultorio-card-body { padding: 14px; }
+.consultorio-meta { font-size: var(--fz-xs); color: var(--clr-text-muted); margin-bottom: 4px; }
+.consultorio-ocupantes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--clr-border); display: flex; flex-direction: column; gap: 8px; }
+.consultorio-ocupante {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: var(--fz-sm);
+  border-left: 2px solid var(--azul);
+  padding-left: 8px;
+}
+.consultorio-ocupante-horario { font-family: var(--font-mono); font-size: 11px; color: var(--clr-text-muted); }
+
+/* ========================
+   TURNOS — tablero de columnas por médico
+   (una columna por médico, agenda del día en paralelo)
+   ======================== */
+.turnos-medico-filtro { position: relative; display: inline-block; }
+.turnos-medico-filtro .btn { display: inline-flex; align-items: center; gap: 6px; }
+.turnos-medico-popover {
+  position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 20;
+  background: var(--blanco); border: 1px solid var(--gris-borde);
+  border-radius: var(--r-sm); box-shadow: var(--shadow-md);
+  padding: var(--sp-2); min-width: 240px;
+}
+.turnos-medico-popover.hidden { display: none; }
+.turnos-medico-popover .checkbox-list { border: none; padding: 0; max-height: 260px; }
+
+.turnos-datebar-picker { position: relative; display: inline-flex; }
+.turnos-datebar-picker input[type="date"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; border: none; padding: 0; margin: 0;
+  width: 100%; height: 100%;
+}
+
+.turnos-datebar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: var(--sp-3);
+}
+.turnos-fecha-label {
+  font-size: var(--fz-sm); font-weight: 600; letter-spacing: .4px;
+  color: var(--clr-text); padding: 0 4px;
+}
+
+.turnos-legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-5);
+  margin-bottom: var(--sp-4);
+  font-size: var(--fz-xs); color: var(--clr-text-muted);
+}
+.turnos-legend-title {
+  font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+  color: var(--clr-text-muted); font-size: 10.5px;
+}
+.turnos-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.turnos-legend .dot { width: 8px; height: 8px; border-radius: var(--r-xs); display: inline-block; }
+.dot-disponible { background: var(--verde); }
+.dot-reservado  { background: var(--naranja); }
+.dot-en-espera  { background: var(--azul); }
+.dot-atendido   { background: var(--verde-light); border: 1px solid var(--verde); }
+.dot-cancelado  { background: var(--rojo-light); border: 1px solid var(--rojo); }
+.dot-completa   { background: var(--rojo); }
+
+.turnos-board-wrapper {
+  overflow-x: auto;
+  padding-bottom: var(--sp-3);
+}
+.turnos-board {
+  display: flex; align-items: flex-start; gap: var(--sp-4);
+  min-height: 200px;
+}
+.turno-column {
+  flex: 0 0 300px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--r-sm);
+  background: var(--blanco);
+  overflow: hidden;
+  max-height: 70vh;
+  display: flex; flex-direction: column;
+}
+.turno-column-header {
+  background: var(--azul-light);
+  border-bottom: 2px solid var(--azul);
+  padding: 10px 14px;
+}
+.turno-column.completa .turno-column-header {
+  background: var(--rojo-light);
+  border-bottom-color: var(--rojo);
+}
+.turno-column-title {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 14.5px; color: var(--azul-dim);
+}
+.turno-column.completa .turno-column-title { color: var(--rojo-dim); }
+.turno-column-stats {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .3px;
+  color: var(--clr-text-muted); margin-top: 2px; text-transform: uppercase;
+}
+.turno-column.completa .turno-column-stats { color: var(--rojo-dim); font-weight: 600; }
+.turno-column-body { flex: 1; overflow-y: auto; }
+.turno-column-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.turno-column-table col.col-hora     { width: 52px; }
+.turno-column-table col.col-dot      { width: 16px; }
+.turno-column-table col.col-paciente { width: auto; }
+.turno-column-table col.col-telefono { width: 70px; }
+.turno-column-table col.col-accion   { width: 30px; }
+.turno-column-table thead th {
+  padding: 6px 8px; font-size: 9.5px; text-align: left;
+  color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1px solid var(--clr-border); background: #fafbfc;
+  position: sticky; top: 0; z-index: 1;
+}
+.turno-column-table tbody td {
+  padding: 7px 8px; border-bottom: 1px solid var(--clr-border);
+  vertical-align: middle;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.turno-column-table tbody tr:last-child td { border-bottom: none; }
+.turno-column-table tbody tr:hover { background: var(--gris-claro); }
+.turno-column-table .turno-hora { font-family: var(--font-mono); white-space: nowrap; padding-left: 4px; padding-right: 2px; overflow: visible; }
+.turno-estado-dot {
+  width: 8px; height: 8px; border-radius: var(--r-full); display: inline-block;
+}
+.turno-row-disponible  .turno-estado-dot { background: var(--verde); }
+.turno-row-reservado   .turno-estado-dot { background: var(--naranja); }
+.turno-row-en-espera   .turno-estado-dot { background: var(--azul); }
+.turno-row-atendido    .turno-estado-dot { background: var(--verde-light); border: 1px solid var(--verde); }
+.turno-row-cancelado   .turno-estado-dot,
+.turno-row-no-asistio  .turno-estado-dot { background: var(--rojo-light); border: 1px solid var(--rojo); }
+.turno-row-cancelado, .turno-row-no-asistio { opacity: .55; }
+.turno-col-accion { text-align: center; overflow: visible; }
+.turno-row-dim { opacity: .3; }
+.turno-row-highlight { background: var(--amarillo-light); }
+.turno-row-highlight:hover { background: var(--amarillo-light); }
+
+/* ========================
+   RESPONSIVE
+   ======================== */
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 99; display: none;
+  }
+  .sidebar-overlay.open { display: block; }
+  .topbar { left: 0; }
+  .main-content { margin-left: 0; }
+  .sidebar-toggle { display: flex; align-items: center; }
+}
+@media (max-width: 600px) {
+  .main-content { padding: 16px; }
+  .topbar { padding: 0 16px; }
+}
