@@ -24,8 +24,8 @@ public class MedicoResponseDTO {
     private String nombreEspecialidad;
     private BigDecimal importeConsulta;
     private String estado;
+    private Boolean visible;
     private LocalDate fechaInicioActividad;
     private List<MedicoPrestacionDTO> prestaciones;
-    private List<String> obrasSociales;
-    private List<Integer> idsObrasSociales;
+    private List<MedicoObraSocialDTO> obrasSociales;
 }

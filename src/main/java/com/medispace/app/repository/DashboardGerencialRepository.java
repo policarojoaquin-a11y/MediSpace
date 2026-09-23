@@ -9,5 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface DashboardGerencialRepository extends JpaRepository<DashboardGerencial, Integer> {
-    Optional<DashboardGerencial> findByFecha(LocalDate fecha);
+    // Tolerante a filas duplicadas para la misma fecha: si por alguna razón hay más de una
+    // (recálculos concurrentes, datos históricos sin índice único en Fecha), un findByFecha
+    // simple reventaría con NonUniqueResultException y tiraría abajo el dashboard entero.
+    // Se toma siempre la más reciente por id.
+    Optional<DashboardGerencial> findFirstByFechaOrderByIdDashboardDesc(LocalDate fecha);
 }

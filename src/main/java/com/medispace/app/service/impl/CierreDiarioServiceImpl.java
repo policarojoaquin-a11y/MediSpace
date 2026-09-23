@@ -46,12 +46,19 @@ public class CierreDiarioServiceImpl implements CierreDiarioService {
         LocalDateTime desde = fecha.atStartOfDay();
         LocalDateTime hasta = fecha.atTime(23, 59, 59);
 
-        // Sumar facturación del día para este médico en este consultorio
+        // Sumar facturación del día para este médico en este consultorio. Igual criterio que
+        // ReporteServiceImpl.recalcularDashboard: se excluyen ANULADO/REINTEGRADO (conservan su
+        // Importe_Total pero no son plata realmente facturada).
         var facturas = facturacionRepository.findByMedicoIdMedicoAndFechaFacturacionBetween(
-                medico.getIdMedico(), desde, hasta);
+                medico.getIdMedico(), desde, hasta).stream()
+                .filter(f -> !"ANULADO".equalsIgnoreCase(f.getEstadoPago()) && !"REINTEGRADO".equalsIgnoreCase(f.getEstadoPago()))
+                .toList();
 
+        // RN-025: el cierre de caja refleja lo efectivamente cobrado en mano, no el precio de
+        // lista de cada consulta — el coseguro que la obra social le paga al médico directo
+        // nunca entra a esta caja.
         BigDecimal totalFacturado = facturas.stream()
-                .map(f -> f.getImporteTotal() != null ? f.getImporteTotal() : BigDecimal.ZERO)
+                .map(f -> SplitFinancieroCalculator.montoCobradoEnMano(f.getImporteTotal(), f.getImporteCopago()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // RN-006: split médico/consultorio — mismo cálculo centralizado que usan Facturación y
@@ -59,8 +66,9 @@ public class CierreDiarioServiceImpl implements CierreDiarioService {
         BigDecimal totalConsultorio = BigDecimal.ZERO;
         BigDecimal totalMedico = BigDecimal.ZERO;
         for (var f : facturas) {
+            BigDecimal base = SplitFinancieroCalculator.montoCobradoEnMano(f.getImporteTotal(), f.getImporteCopago());
             SplitFinancieroCalculator.Split split = SplitFinancieroCalculator.calcular(
-                    f.getImporteTotal(), f.getPorcentajeMedico(), f.getPorcentajeConsultorio());
+                    base, f.getPorcentajeMedico(), f.getPorcentajeConsultorio());
             totalMedico = totalMedico.add(split.parteMedico());
             totalConsultorio = totalConsultorio.add(split.parteConsultorio());
         }

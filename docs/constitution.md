@@ -12,16 +12,17 @@ Reglas fijas del proyecto. Se cargan una sola vez en la configuración del agent
 ## 2. Base de datos
 
 - No modificar el esquema de `/db/schema.sql` sin aprobación explícita — está definido por la propuesta técnica aceptada por el cliente.
+- **Todo cambio de esquema ejecutado directamente contra una base viva** (migración de `docs/migrations/` aplicada, o cualquier `ALTER`/`CREATE`/`UPDATE` suelto corrido a mano) se registra en `docs/DB_CHANGELOG.md` en el momento en que se ejecuta — no después. La entrada incluye: fecha, script o comando exacto, base afectada (real vs. de prueba/clon), quién lo aplicó, motivo, y cómo se verificó. Nunca aplicar un cambio de esquema contra la base real sin confirmación explícita del usuario primero.
 - **Soft delete siempre.** Ninguna tabla transaccional (Pacientes, Médicos, Turnos, Historia_Clinica, Evolucion_Clinica, Facturacion, Liquidacion_Medica, Arrendamiento_Modulo, Consultorio) permite `DELETE` físico. Se usa el campo `Visible`/`Estado` correspondiente.
 - Toda entidad nueva respeta el nombre de tabla y campos tal como están en `schema.sql` (español, sin traducir a inglés).
 - Los IDs autoincrementales (`Serial`) se mapean como `IDENTITY(1,1)` en SQL Server.
 
 ## 3. Seguridad y roles
 
-- 4 roles: `GERENTE`, `ADMINISTRATIVO`, `MEDICO`, `PACIENTE`. Un usuario tiene un único rol activo (RN-015).
+- 3 roles: `GERENTE`, `ADMINISTRATIVO`, `MEDICO`. Un usuario tiene un único rol activo (RN-015). El paciente **no** tiene usuario ni login — es un registro de datos gestionado por Gerente/Administrativo.
 - Cada endpoint valida el rol permitido según la matriz de "Acceso y Permisos" de `spec.md` — nunca ocultar un botón en el frontend como única barrera.
 - Passwords siempre hasheadas (BCrypt o equivalente). Nunca loguear ni exponer el hash.
-- Un médico solo accede a sus propios turnos/pacientes/historias clínicas ("solo propios" en la matriz de permisos). Un paciente solo accede a sus propios datos.
+- Un médico solo accede a sus propios turnos/pacientes/historias clínicas ("solo propios" en la matriz de permisos).
 
 ## 4. Auditoría
 
@@ -36,7 +37,7 @@ Reglas fijas del proyecto. Se cargan una sola vez en la configuración del agent
 
 ## 6. Alcance
 
-- No implementar integraciones externas (obras sociales, AFIP, laboratorios) — están explícitamente fuera de alcance.
+- No implementar integraciones externas (verificación online con sistemas reales de obras sociales, AFIP, laboratorios) — están explícitamente fuera de alcance. Esto no incluye el catálogo interno de Obras Sociales (§4.9 de `spec.md`), que es dato maestro propio del sistema, sin integración externa.
 - No generar apps móviles nativas — solo web responsivo.
 - Ante ambigüedad entre lo que pide un prompt puntual y lo que dice `spec.md`/`plan.md`, **`spec.md` manda**. Si hay contradicción, avisar antes de generar código.
 

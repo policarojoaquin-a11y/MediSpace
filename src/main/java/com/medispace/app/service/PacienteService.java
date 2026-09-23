@@ -9,7 +9,11 @@ import java.util.List;
 public interface PacienteService {
     PacienteResponseDTO crearPaciente(PacienteCreateDTO dto);
     PacienteResponseDTO actualizarPaciente(Integer id, PacienteUpdateDTO dto);
-    PacienteResponseDTO obtenerPaciente(Integer id);
-    List<PacienteResponseDTO> listarPacientes();
+
+    // idMedicoFiltro: si viene no-null (caller con rol MEDICO), restringe a pacientes vinculados
+    // a ese médico. GERENTE/ADMINISTRATIVO pasan null y ven todo.
+    PacienteResponseDTO obtenerPaciente(Integer id, Integer idMedicoFiltro);
+    List<PacienteResponseDTO> listarPacientes(Integer idMedicoFiltro);
+
     void eliminarPaciente(Integer id);
 }

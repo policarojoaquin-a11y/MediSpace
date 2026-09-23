@@ -109,16 +109,87 @@
       <div class="search-bar">
         <div class="search-input-wrapper">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" class="search-input" id="search-pacientes" placeholder="Buscar por nombre, apellido o DNI…" />
+          <input type="text" class="search-input" id="search-pacientes" placeholder="Buscar por nombre, apellido o documento…" />
         </div>
       </div>
       <div class="table-wrapper">
         <table>
           <thead>
-            <tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Obra Social</th><th>Estado</th><th>Acciones</th></tr>
+            <tr><th>Nombre</th><th>DNI / Pasaporte</th><th>Teléfono</th><th>Obra Social</th><th>Estado</th><th>Acciones</th></tr>
           </thead>
           <tbody id="tabla-pacientes">
             <tr><td colspan="6"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- === OBRAS SOCIALES === -->
+    <div class="module-view" id="view-obras-sociales">
+      <div class="page-header">
+        <div><h1 class="page-title">Obras Sociales</h1><p class="page-subtitle">Obras sociales disponibles para pacientes y médicos</p></div>
+        <button class="btn btn-primary" id="btn-nueva-obra-social">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/></svg>
+          Nueva Obra Social
+        </button>
+      </div>
+      <div class="search-bar" style="flex-wrap:wrap;gap:8px;">
+        <div class="search-input-wrapper">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
+          <input type="text" class="search-input" id="search-obras-sociales" placeholder="Buscar por nombre…" />
+        </div>
+        <select id="filtro-obras-sociales-bono" class="search-input" style="max-width:200px;">
+          <option value="">Requiere bono: todos</option>
+          <option value="true">Requiere bono: Sí</option>
+          <option value="false">Requiere bono: No</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+          <input type="checkbox" id="filtro-obras-sociales-inactivas" /> Incluir inactivas
+        </label>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Código/Sigla</th><th>Plan</th><th>Requiere Bono</th><th>Médicos Asociados</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tabla-obras-sociales">
+            <tr><td colspan="7"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- === USUARIOS === -->
+    <div class="module-view" id="view-usuarios">
+      <div class="page-header">
+        <div><h1 class="page-title">Usuarios</h1><p class="page-subtitle">Gestión de accesos al sistema (Gerente, Administrativo, Médico)</p></div>
+        <button class="btn btn-primary" id="btn-nuevo-usuario">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/></svg>
+          Nuevo Usuario
+        </button>
+      </div>
+      <div class="search-bar" style="flex-wrap:wrap;gap:8px;">
+        <div class="search-input-wrapper">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
+          <input type="text" class="search-input" id="search-usuarios" placeholder="Buscar por email…" />
+        </div>
+        <select id="filtro-usuarios-rol" class="search-input" style="max-width:200px;">
+          <option value="">Todos los roles</option>
+          <option value="GERENTE">Gerente</option>
+          <option value="ADMINISTRATIVO">Administrativo</option>
+          <option value="MEDICO">Médico</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+          <input type="checkbox" id="filtro-usuarios-inactivos" /> Incluir inactivos
+        </label>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Rol</th><th>Fecha de Alta</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tabla-usuarios">
+            <tr><td colspan="5"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -133,11 +204,14 @@
           Nuevo Médico
         </button>
       </div>
-      <div class="search-bar">
+      <div class="search-bar" style="flex-wrap:wrap;gap:8px;">
         <div class="search-input-wrapper">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
           <input type="text" class="search-input" id="search-medicos" placeholder="Buscar por nombre, matrícula o especialidad…" />
         </div>
+        <label style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+          <input type="checkbox" id="filtro-medicos-inactivos" /> Incluir inactivos
+        </label>
       </div>
       <div class="table-wrapper">
         <table>
@@ -179,7 +253,7 @@
       <div class="search-bar" style="flex-wrap:wrap;gap:8px;">
         <div class="search-input-wrapper">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" class="search-input" id="search-turnos" placeholder="Buscar paciente (apellido, nombre o DNI)…" />
+          <input type="text" class="search-input" id="search-turnos" placeholder="Buscar paciente (apellido, nombre o documento)…" />
         </div>
 
         <div class="turnos-medico-filtro" id="turnos-medico-filtro-wrapper">
@@ -216,7 +290,7 @@
       <div class="search-bar">
         <div class="search-input-wrapper">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" class="search-input" id="search-hc-paciente" placeholder="Buscar paciente por nombre o DNI…" />
+          <input type="text" class="search-input" id="search-hc-paciente" placeholder="Buscar paciente por nombre o documento…" />
         </div>
         <button class="btn btn-primary btn-sm" onclick="buscarHistoriaClinica()">Buscar</button>
       </div>
@@ -224,7 +298,7 @@
         <div class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/><polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2"/></svg>
           <h3>Buscar un paciente</h3>
-          <p>Ingresá el nombre o DNI del paciente para ver su historia clínica.</p>
+          <p>Ingresá el nombre o documento del paciente para ver su historia clínica.</p>
         </div>
       </div>
     </div>
@@ -234,19 +308,85 @@
       <div class="page-header">
         <div><h1 class="page-title">Facturación</h1><p class="page-subtitle">Cobros y estados de facturación</p></div>
       </div>
-      <div class="search-bar">
+
+      <!-- Navegación de fecha (mismo patrón que Turnos) -->
+      <div class="turnos-datebar">
+        <button class="btn btn-secondary btn-sm" id="btn-fact-hoy">Hoy</button>
+        <button class="btn-icon" id="btn-fact-dia-anterior" title="Día anterior">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <span class="turnos-fecha-label mono" id="fact-fecha-label">FACTURACIÓN DEL —</span>
+        <button class="btn-icon" id="btn-fact-dia-siguiente" title="Día siguiente">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <span class="turnos-datebar-picker">
+          <button class="btn-icon" id="btn-fact-calendario" title="Elegir fecha">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+          <input type="date" id="fact-fecha-input" />
+        </span>
+        <button class="btn btn-secondary btn-sm" id="btn-fact-rango-toggle">Rango…</button>
+        <button class="btn-ghost btn-sm" id="btn-fact-ver-todas">Ver todas</button>
+      </div>
+
+      <!-- Rango Desde–Hasta (oculto por defecto) -->
+      <div class="turnos-datebar hidden" id="fact-rango-bar">
+        <label class="text-muted" style="font-size:12px;">Desde</label>
+        <input type="date" id="fact-desde" class="search-input" style="max-width:150px;min-height:auto;" />
+        <label class="text-muted" style="font-size:12px;">Hasta</label>
+        <input type="date" id="fact-hasta" class="search-input" style="max-width:150px;min-height:auto;" />
+        <button class="btn btn-primary btn-sm" id="btn-fact-rango-aplicar">Aplicar</button>
+      </div>
+
+      <div class="search-bar" style="flex-wrap:wrap;gap:8px;">
         <div class="search-input-wrapper">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" class="search-input" id="search-facturacion" placeholder="Buscar…" />
+          <input type="text" class="search-input" id="search-facturacion" placeholder="Buscar paciente o médico…" />
         </div>
+        <select class="search-input" id="fact-estado-filtro" style="max-width:220px;">
+          <option value="">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente (sin cobro)</option>
+          <option value="TRANSFERENCIA_A_VALIDAR">Transferencia a validar</option>
+          <option value="PAGADO">Pagado</option>
+          <option value="PARCIAL">Parcial</option>
+          <option value="ANULADO">Anulado</option>
+          <option value="REINTEGRADO">Reintegrado</option>
+        </select>
+        <span class="text-muted" id="fact-resumen" style="font-size:12px;"></span>
       </div>
       <div class="table-wrapper">
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Paciente</th><th>Médico</th><th>Total</th><th>Copago</th><th>Estado Pago</th><th>Acciones</th></tr>
+            <tr><th>Fecha</th><th>Paciente</th><th>Médico</th><th>Total</th><th>Cubierto OS</th><th>Copago</th><th>Método</th><th>Estado Pago</th><th>Acciones</th></tr>
           </thead>
           <tbody id="tabla-facturacion">
-            <tr><td colspan="7"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
+            <tr><td colspan="8"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- === LIQUIDACIONES === -->
+    <div class="module-view" id="view-liquidaciones">
+      <div class="page-header">
+        <div><h1 class="page-title">Liquidaciones Médicas</h1><p class="page-subtitle">Split de facturación por médico y período</p></div>
+        <button class="btn btn-primary hidden" id="btn-generar-liquidacion">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/></svg>
+          Generar Liquidación
+        </button>
+      </div>
+      <div class="search-bar hidden" id="liquidaciones-filtros" style="flex-wrap:wrap;gap:8px;">
+        <select id="filtro-liq-medico" class="search-input" style="max-width:240px;"><option value="">Todos los médicos</option></select>
+        <label style="display:flex;align-items:center;gap:6px;">Desde <input type="date" id="filtro-liq-desde" /></label>
+        <label style="display:flex;align-items:center;gap:6px;">Hasta <input type="date" id="filtro-liq-hasta" /></label>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead id="thead-liquidaciones">
+            <tr><th>Médico</th><th>Desde</th><th>Hasta</th><th>Total Facturado</th><th>Total Médico</th><th>Total Consultorio</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tabla-liquidaciones">
+            <tr><td colspan="8"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -334,10 +474,10 @@
           <div class="form-group"><label>Desde</label><input type="date" id="reporte-desde" /></div>
           <div class="form-group"><label>Hasta</label><input type="date" id="reporte-hasta" /></div>
         </div>
-        <div class="flex gap-3 mt-4">
-          <button class="btn btn-primary btn-sm" onclick="loadReporteFacturacion()">Facturación por Médico</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadReporteOS()">Por Obra Social</button>
-          <button class="btn btn-secondary btn-sm" onclick="loadReporteConsultorios()">Uso de Consultorios</button>
+        <div class="flex gap-3 mt-4" id="reporte-botones">
+          <button class="btn btn-secondary btn-sm" data-reporte="facturacion" onclick="loadReporteFacturacion()">Facturación por Médico</button>
+          <button class="btn btn-secondary btn-sm" data-reporte="os" onclick="loadReporteOS()">Por Obra Social</button>
+          <button class="btn btn-secondary btn-sm" data-reporte="consultorios" onclick="loadReporteConsultorios()">Uso de Consultorios</button>
         </div>
       </div>
       <div id="reporte-resultado"></div>
@@ -353,10 +493,10 @@
       </div>
     </div>
 
-    <!-- === MIS PRESTACIONES (médico, solo lectura) === -->
+    <!-- === MIS PRESTACIONES (médico, gestión propia) === -->
     <div class="module-view" id="view-mis-prestaciones">
       <div class="page-header">
-        <div><h1 class="page-title">Mis Prestaciones</h1><p class="page-subtitle">Prestaciones que ofrecés (solo lectura)</p></div>
+        <div><h1 class="page-title">Mis Prestaciones</h1><p class="page-subtitle">Prestaciones que ofrecés — las gestionás vos</p></div>
       </div>
       <div id="mis-prestaciones-container">
         <div class="loading-overlay"><div class="spinner"></div></div>
@@ -383,12 +523,19 @@
         <div class="form-group"><label>Apellido *</label><input type="text" id="pac-apellido" placeholder="Ej: García" /></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>DNI *</label><input type="text" id="pac-dni" placeholder="12345678" /></div>
+        <div class="form-group"><label>DNI / Pasaporte *</label><input type="text" id="pac-dni" placeholder="DNI, o N° de pasaporte si es extranjero" /></div>
         <div class="form-group"><label>Fecha de Nacimiento *</label><input type="date" id="pac-fnac" /></div>
       </div>
       <div class="form-group"><label>Teléfono</label><input type="text" id="pac-telefono" placeholder="Ej: 11-4444-5555" /></div>
       <div class="form-row">
-        <div class="form-group"><label>Obra Social</label><select id="pac-obra-social"><option value="">Particular</option></select></div>
+        <div class="form-group">
+          <label>Obra Social</label>
+          <select id="pac-obra-social"><option value="">Particular</option></select>
+          <div id="pac-obra-social-nueva-inline" class="hidden" style="display:flex; gap:6px; margin-top:6px;">
+            <input type="text" id="pac-obra-social-nueva-nombre" placeholder="Nombre de la nueva obra social" style="flex:1;" />
+            <button type="button" class="btn btn-secondary" onclick="confirmarNuevaObraSocialPaciente()">Agregar</button>
+          </div>
+        </div>
         <div class="form-group"><label>Nro. Credencial</label><input type="text" id="pac-credencial" /></div>
       </div>
       <div class="form-row">
@@ -402,6 +549,88 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-paciente')">Cancelar</button>
       <button class="btn btn-primary" id="btn-guardar-paciente" onclick="guardarPaciente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Obra Social -->
+<div class="modal-overlay" id="modal-obra-social">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-obra-social-title">Nueva Obra Social</h2>
+      <button class="modal-close" onclick="closeModal('modal-obra-social')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Nombre *</label><input type="text" id="os-nombre" placeholder="Ej: OSDE" /></div>
+        <div class="form-group"><label>Código/Sigla</label><input type="text" id="os-codigo-sigla" placeholder="Ej: OSDE" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Plan</label><input type="text" id="os-plan" placeholder="Ej: 210" /></div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="os-requiere-bono" /> Requiere bono de consulta previo
+          </label>
+        </div>
+      </div>
+      <div class="form-group"><label>Observaciones</label><textarea id="os-observaciones"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-obra-social')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-obra-social" onclick="guardarObraSocial()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Generar Liquidación -->
+<div class="modal-overlay" id="modal-generar-liquidacion">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Generar Liquidación</h2>
+      <button class="modal-close" onclick="closeModal('modal-generar-liquidacion')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Médico *</label><select id="liq-gen-medico"><option value="">Seleccioná un médico…</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><label>Desde *</label><input type="date" id="liq-gen-desde" /></div>
+        <div class="form-group"><label>Hasta *</label><input type="date" id="liq-gen-hasta" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-generar-liquidacion')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirmar-generar-liquidacion" onclick="confirmarGenerarLiquidacion()">Generar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Usuario -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-usuario-title">Nuevo Usuario</h2>
+      <button class="modal-close" onclick="closeModal('modal-usuario')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Email *</label><input type="email" id="usu-email" placeholder="usuario@medispace.com" /></div>
+      <div class="form-group" id="usu-password-group"><label>Contraseña *</label><input type="password" id="usu-password" placeholder="Mínimo 6 caracteres" /></div>
+      <div class="form-group">
+        <label>Rol *</label>
+        <select id="usu-rol">
+          <option value="GERENTE">Gerente</option>
+          <option value="ADMINISTRATIVO">Administrativo</option>
+        </select>
+        <p class="form-hint" id="usu-rol-hint">El alta de usuarios con rol Médico se hace desde el módulo Médicos.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-usuario" onclick="guardarUsuario()">Guardar</button>
     </div>
   </div>
 </div>
@@ -441,13 +670,25 @@
       </div>
       <div class="form-group">
         <label>Obras Sociales</label>
-        <div id="medico-obrassociales-list" class="checkbox-list"></div>
+        <p class="form-hint">El coseguro es el que decide este médico para cada obra social.</p>
+        <table class="table" id="medico-obrassociales-table">
+          <thead>
+            <tr><th>Obra Social</th><th>Coseguro</th><th></th></tr>
+          </thead>
+          <tbody id="medico-obrassociales-tbody"></tbody>
+        </table>
+        <button type="button" class="btn btn-secondary" onclick="agregarFilaObraSocial()">+ Agregar obra social</button>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="document.getElementById('medico-obra-social-nueva-inline').classList.toggle('hidden')">+ Nueva obra social en el catálogo…</button>
+        <div id="medico-obra-social-nueva-inline" class="hidden" style="display:flex; gap:6px; margin-top:6px;">
+          <input type="text" id="medico-obra-social-nueva-nombre" placeholder="Nombre de la nueva obra social" style="flex:1;" />
+          <button type="button" class="btn btn-secondary" onclick="confirmarNuevaObraSocialMedico()">Agregar</button>
+        </div>
       </div>
       <div class="form-group">
         <label>Prestaciones</label>
         <table class="table" id="medico-prestaciones-table">
           <thead>
-            <tr><th>Prestación</th><th>Duración (min)</th><th>Importe Particular</th><th>Tipo</th><th></th></tr>
+            <tr><th>Prestación</th><th>Duración (min)</th><th>Importe Particular</th><th></th></tr>
           </thead>
           <tbody id="medico-prestaciones-tbody"></tbody>
         </table>
@@ -457,6 +698,36 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-medico')">Cancelar</button>
       <button class="btn btn-primary" id="btn-guardar-medico" onclick="guardarMedico()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mi Prestación (médico — alta/edición de una prestación de su cartilla) -->
+<div class="modal-overlay" id="modal-mi-prestacion">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-mi-prestacion-title">Agregar prestación</h2>
+      <button class="modal-close" onclick="closeModal('modal-mi-prestacion')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" id="mi-prestacion-nombre-group">
+        <label>Prestación *</label>
+        <input type="text" id="mi-prestacion-nombre" placeholder="Ej: Ecografía" />
+      </div>
+      <div class="form-group hidden" id="mi-prestacion-nombre-fijo-group">
+        <label>Prestación</label>
+        <p id="mi-prestacion-nombre-fijo" class="mono"></p>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Duración estimada (min)</label><input type="number" id="mi-prestacion-duracion" min="0" placeholder="Ej: 20" /></div>
+        <div class="form-group"><label>Importe particular</label><input type="number" id="mi-prestacion-importe" min="0" step="0.01" placeholder="Ej: 15000" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-mi-prestacion')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-mi-prestacion" onclick="guardarMiPrestacion()">Guardar</button>
     </div>
   </div>
 </div>
@@ -472,18 +743,19 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="cobro-id-factura" />
+      <input type="hidden" id="cobro-origen" />
       <div class="form-group"><label>Método de Pago *</label>
         <select id="cobro-metodo">
           <option value="EFECTIVO">Efectivo</option>
-          <option value="TARJETA_DEBITO">Tarjeta Débito</option>
-          <option value="TARJETA_CREDITO">Tarjeta Crédito</option>
           <option value="TRANSFERENCIA">Transferencia</option>
-          <option value="OBRA_SOCIAL">Obra Social</option>
         </select>
+        <p class="form-hint">Con transferencia, la factura queda "Pendiente" hasta confirmar el ingreso.</p>
       </div>
-      <div class="form-group"><label>Importe Total *</label><input type="number" id="cobro-importe" min="0" step="0.01" /></div>
-      <div class="form-group"><label>Cubierto OS</label><input type="number" id="cobro-os" min="0" step="0.01" placeholder="0.00" /></div>
-      <div class="form-group"><label>Copago</label><input type="number" id="cobro-copago" min="0" step="0.01" placeholder="0.00" /></div>
+      <div class="form-group"><label>Importe Total *</label><input type="number" id="cobro-importe" min="0" step="0.01" oninput="recalcularCobroOs()" /></div>
+      <div class="form-group"><label>Cubierto OS</label><input type="number" id="cobro-os" min="0" step="0.01" placeholder="0.00" readonly />
+        <p class="form-hint" style="margin:4px 0 0;">Calculado solo: Importe Total menos Copago. Lo cubre la obra social directamente al médico, no se cobra por este sistema.</p>
+      </div>
+      <div class="form-group"><label>Copago</label><input type="number" id="cobro-copago" min="0" step="0.01" placeholder="0.00" oninput="recalcularCobroOs()" /></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-cobro')">Cancelar</button>
@@ -562,7 +834,7 @@
           <button type="button" class="btn-ghost" style="font-size:12px;padding:2px 6px;min-height:auto;" onclick="toggleNuevoPacienteReserva()" id="btn-toggle-nuevo-paciente">+ Nuevo paciente</button>
         </div>
         <div class="patient-search-wrap">
-          <input type="text" id="reserva-paciente-search" placeholder="Buscar por DNI o nombre…" autocomplete="off" />
+          <input type="text" id="reserva-paciente-search" placeholder="Buscar por documento o nombre…" autocomplete="off" />
           <input type="hidden" id="reserva-id-paciente" />
           <div class="patient-search-results hidden" id="reserva-paciente-resultados"></div>
         </div>
@@ -573,23 +845,62 @@
           <div class="form-group"><label>Apellido *</label><input type="text" id="np-apellido" /></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>DNI *</label><input type="text" id="np-dni" /></div>
+          <div class="form-group"><label>DNI / Pasaporte *</label><input type="text" id="np-dni" placeholder="DNI, o N° de pasaporte si es extranjero" /></div>
           <div class="form-group"><label>Fecha de Nacimiento *</label><input type="date" id="np-fnac" /></div>
         </div>
         <button type="button" class="btn btn-secondary btn-sm w-full" onclick="crearPacienteRapido()">Crear y seleccionar</button>
       </div>
       <div class="form-group"><label>Tipo de Consulta</label>
-        <select id="reserva-tipo"><option value="CONSULTA">Consulta</option><option value="CONTROL">Control</option><option value="PRACTICA">Práctica Médica</option></select>
+        <select id="reserva-tipo"><option value="CONSULTA">Consulta</option><option value="PRACTICA">Práctica Médica</option></select>
+      </div>
+      <div class="form-group"><label>Prestación</label>
+        <select id="reserva-prestacion" onchange="actualizarImporteEstimadoReserva()"><option value="">Consulta general</option></select>
+        <p class="form-hint" id="reserva-importe-hint" style="margin:4px 0 0;"></p>
       </div>
       <div class="form-group"><label>Método de Pago</label>
-        <select id="reserva-metodo"><option value="EFECTIVO">Efectivo</option><option value="OBRA_SOCIAL">Obra Social</option><option value="TARJETA_DEBITO">Tarjeta Débito</option><option value="TARJETA_CREDITO">Tarjeta Crédito</option><option value="TRANSFERENCIA">Transferencia</option></select>
+        <select id="reserva-metodo"><option value="EFECTIVO">Efectivo</option><option value="TRANSFERENCIA">Transferencia</option></select>
       </div>
-      <div class="form-group"><label>Obra Social (si aplica)</label><input type="text" id="reserva-obra-social" placeholder="Ej: OSDE" /></div>
-      <div class="form-group"><label>Copago</label><input type="number" id="reserva-copago" min="0" step="0.01" placeholder="0.00" /></div>
+      <div class="form-group"><label>Obra Social (si aplica)</label>
+        <select id="reserva-obra-social" onchange="actualizarCopagoDesdeObraSocial()"><option value="">Particular (sin obra social)</option></select>
+      </div>
+      <div class="form-group"><label>Monto a cobrar al paciente</label><input type="number" id="reserva-copago" min="0" step="0.01" placeholder="0.00" />
+        <p class="form-hint" id="reserva-copago-hint" style="margin:4px 0 0;"></p>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-reservar')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarReserva()">Reservar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cancelar Día del Médico (RF-T8) -->
+<div class="modal-overlay" id="modal-cancelar-dia">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Cancelar día del médico</h2>
+      <button class="modal-close" onclick="closeModal('modal-cancelar-dia')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cancelar-dia-id-medico" />
+      <div class="form-group"><label>Médico</label><input type="text" id="cancelar-dia-medico-nombre" readonly /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Desde *</label><input type="date" id="cancelar-dia-desde" /></div>
+        <div class="form-group"><label>Hasta</label><input type="date" id="cancelar-dia-hasta" /></div>
+      </div>
+      <p class="form-hint">Dejá "Hasta" vacío para cancelar un solo día. Completalo para un rango (vacaciones / licencia).</p>
+      <div class="form-group"><label>Motivo</label><input type="text" id="cancelar-dia-motivo" placeholder="Ej: Vacaciones" /></div>
+      <div class="alert alert-warning" style="font-size:13px;">
+        Se cancelarán los turnos <strong>futuros</strong> de ese médico en el período. Los turnos con paciente
+        se cancelan y vas a tener que contactarlos para reprogramar. Los turnos ya atendidos no se tocan.
+      </div>
+      <div id="cancelar-dia-contactar"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-cancelar-dia')">Volver</button>
+      <button class="btn btn-danger" id="btn-confirmar-cancelar-dia" onclick="confirmarCancelarDia()">Cancelar día</button>
     </div>
   </div>
 </div>
@@ -612,6 +923,14 @@
       <div class="form-group"><label>Indicaciones</label><textarea id="evol-indicaciones"></textarea></div>
       <div class="form-group"><label>Estudios Solicitados</label><input type="text" id="evol-estudios" /></div>
       <div class="form-group"><label>Observaciones</label><textarea id="evol-observaciones"></textarea></div>
+      <div class="form-group hidden" id="evol-adjuntos-group">
+        <label>Adjuntos (PDF/JPG/PNG, hasta 10MB)</label>
+        <div id="evol-adjuntos-list"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+          <input type="file" id="evol-adjunto-file" accept=".pdf,.jpg,.jpeg,.png" />
+          <button type="button" class="btn btn-secondary btn-sm" onclick="subirAdjunto()">Subir</button>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-evolucion')">Cancelar</button>
@@ -620,13 +939,42 @@
   </div>
 </div>
 
+<!-- Modal Adjuntos (solo adjuntar/descargar — sin editar el texto clínico). Lo usan
+     ADMINISTRATIVO y MEDICO (RF-H3). -->
+<div class="modal-overlay" id="modal-adjuntos">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Adjuntos de la evolución</h2>
+      <button class="modal-close" onclick="closeModal('modal-adjuntos')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Archivos adjuntos (PDF/JPG/PNG, hasta 10MB)</label>
+        <div id="adj-lista"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+          <input type="file" id="adj-file" accept=".pdf,.jpg,.jpeg,.png" />
+          <button type="button" class="btn btn-secondary btn-sm" onclick="subirAdjuntoModal()">Subir</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModalAdjuntos()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 <script src="js/components/checkbox-list.js"></script>
+<script src="js/modules/usuarios.js"></script>
 <script src="js/modules/pacientes.js"></script>
+<script src="js/modules/obrasSociales.js"></script>
 <script src="js/modules/medicos.js"></script>
 <script src="js/modules/turnos.js"></script>
 <script src="js/modules/historias.js"></script>
 <script src="js/modules/facturacion.js"></script>
+<script src="js/modules/liquidaciones.js"></script>
 <script src="js/modules/arrendamientos.js"></script>
 <script src="js/modules/reportes.js"></script>
 <script src="js/app.js"></script>

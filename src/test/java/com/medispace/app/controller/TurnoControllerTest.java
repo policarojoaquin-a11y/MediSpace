@@ -1,6 +1,8 @@
 package com.medispace.app.controller;
 
 import com.medispace.app.dto.turno.CambiarEstadoTurnoDTO;
+import com.medispace.app.dto.turno.CancelacionDiaResponseDTO;
+import com.medispace.app.dto.turno.CancelarDiaMedicoDTO;
 import com.medispace.app.dto.turno.TurnoResponseDTO;
 import com.medispace.app.security.MedicoAccessGuard;
 import com.medispace.app.service.TurnoService;
@@ -14,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -104,5 +107,33 @@ class TurnoControllerTest {
 
         assertEquals(200, response.getStatusCode().value());
         verify(medicoAccessGuard, times(1)).verificarAccesoPropio(2, auth);
+    }
+
+    @Test
+    void cancelarDiaMedico_MedicoFuerzaSuPropioIdEIgnoraElDelBody() {
+        Authentication auth = authMedico();
+        when(medicoAccessGuard.idMedicoPropioSiAplica(auth)).thenReturn(7);
+        when(turnoService.cancelarDiaMedico(any())).thenReturn(CancelacionDiaResponseDTO.builder().idMedico(7).build());
+
+        CancelarDiaMedicoDTO dto = CancelarDiaMedicoDTO.builder().idMedico(99).fecha(LocalDate.now().plusDays(1)).build();
+        controller.cancelarDiaMedico(dto, auth);
+
+        assertEquals(7, dto.getIdMedico());
+        verify(turnoService, times(1)).cancelarDiaMedico(dto);
+        verify(medicoAccessGuard, never()).verificarAccesoPropio(anyInt(), any());
+    }
+
+    @Test
+    void cancelarDiaMedico_GerenteRespetaElIdMedicoDelBody() {
+        Authentication auth = authGerente();
+        when(medicoAccessGuard.idMedicoPropioSiAplica(auth)).thenReturn(null);
+        when(turnoService.cancelarDiaMedico(any())).thenReturn(CancelacionDiaResponseDTO.builder().build());
+
+        CancelarDiaMedicoDTO dto = CancelarDiaMedicoDTO.builder().idMedico(4).fecha(LocalDate.now().plusDays(1)).build();
+        controller.cancelarDiaMedico(dto, auth);
+
+        assertEquals(4, dto.getIdMedico());
+        verify(medicoAccessGuard, times(1)).verificarAccesoPropio(4, auth);
+        verify(turnoService, times(1)).cancelarDiaMedico(dto);
     }
 }

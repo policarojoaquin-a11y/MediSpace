@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=MediSpace;encrypt=false;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost\SQLEXPRESS01;databaseName=MediSpace;encrypt=false;trustServerCertificate=true
     username: sa
     password: YourStrong!Passw0rd
     driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -21,8 +21,17 @@ spring:
       mode: never
       schema-locations: classpath:db/schema.sql
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: 8080
+
+medispace:
+  uploads:
+    dir: ./uploads/historias-clinicas
 
 jwt:
   # Solo para desarrollo local. En cualquier despliegue real, setear la variable de entorno

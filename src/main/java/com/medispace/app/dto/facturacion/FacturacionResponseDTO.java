@@ -25,6 +25,9 @@ public class FacturacionResponseDTO {
     private String obraSocial;
     private BigDecimal importeTotal;
     private BigDecimal importeCopago;
+    // RN-025: derivado (importeTotal - importeCopago), no persistido — lo que cubre la obra
+    // social directamente al médico, fuera de la caja del consultorio. Informativo.
+    private BigDecimal importeCubiertoOs;
     private BigDecimal porcentajeConsultorio;
     private BigDecimal porcentajeMedico;
     private String estadoPago;

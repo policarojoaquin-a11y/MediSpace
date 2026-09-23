@@ -67,7 +67,7 @@ Reglas que no cambian entre tareas — ponerlas una vez en la "constitution" del
 - Toda regla de negocio se valida en el Service (backend), nunca solo en el frontend.
 - Soft delete siempre (`Visible`), nunca DELETE físico en tablas transaccionales.
 - Toda mutación financiera y clínica queda auditada (usuario, fecha/hora, valores antes/después).
-- Acceso a endpoints controlado por rol (Gerente/Administrativo/Médico/Paciente), no solo ocultar botones en UI.
+- Acceso a endpoints controlado por rol (Gerente/Administrativo/Médico), no solo ocultar botones en UI. El paciente no tiene rol de sistema ni login.
 - Nomenclatura de tablas/campos en español, tal como está en el esquema original (no traducir a inglés).
 
 ## 7. Testing (según Aseguramiento de Calidad de la propuesta)

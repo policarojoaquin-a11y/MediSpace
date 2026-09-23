@@ -1,0 +1,68 @@
+MediSpace — Snapshot de control PRE-QA
+Generado: 2026-09-23 (Fase 0, antes de crear cualquier dato QA)
+Script: qa/snapshot_control.sql
+Instancia: JP-LAPTOP\SQLEXPRESS01 (SQL Server 2019 Express, 15.0.2000.5)
+Base: MediSpace (recovery model SIMPLE)
+
+TableName                RowCount_    Chk_Main     Chk_Text
+---------                ---------    --------     --------
+Adjuntos_HistoriaClinica         2 -1712308448     (null)
+Agenda_Medico                    3 -1908820588     (null)
+Arrendamiento_Modulo            11  -961747928     0
+Cierre_Diario                    0  (null)         (null)
+Cobros                          28 -1349969470     (null)
+Consultorio                      4   135628279     0
+Especialidades                   4  1756822477     (null)
+Evolucion_Clinica                2   472365216     -314102151
+Facturacion                     35   306931408     0
+Historia_Clinica                14   -61852927     (null)
+Liquidacion_Medica               6    38194491     -1489504384
+Medico_ObraSocial               13 -1794105760     (null)
+Medico_Prestacion                5  1678259118     (null)
+Medicos                          7    33268247     (null)
+ObraSocial                       5  2134929046     (null)
+Pacientes                       14  1042951118     (null)
+Pago_Facturacion                 0  (null)         (null)
+Prestaciones_Medicas              5   550904831     (null)
+Reporte_Generado                 0  (null)         (null)
+Turnos                         1836  2031121993     (null)
+Uso_Consultorio                  0  (null)         (null)
+Usuarios                        13  2053124170     (null)
+
+Nota: en el momento de este snapshot no existia ningun registro QA (verificado con
+consulta separada: 0 filas en Usuarios/@qa.test, Pacientes DNI 99000001-99000999,
+Pacientes QA_%, Medicos QA-%, Consultorio QA-1/2/3, ObraSocial QA_%, Especialidades QA_%),
+por lo que este snapshot cubre efectivamente el 100% de las filas reales.
+
+En Fase 9, tras qa_cleanup.sql, re-ejecutar qa/snapshot_control.sql y comparar fila por fila
+contra esta tabla. Cualquier diferencia en RowCount_, Chk_Main o Chk_Text es un incidente
+critico a reportar de inmediato.
+
+Dashboard_Gerencial se excluyo de la tabla de arriba (corregido 2026-09-23): no tiene filtro QA
+propio, y Fecha_Actualizacion cambia con cada recalculo — un CHECKSUM_AGG de toda la tabla
+fallaria en falso cada vez que se recalcula CUALQUIER fecha, incluso sin tocar datos reales. Se
+compara aparte, fila por fila, excluyendo Fecha_Actualizacion del checksum (ver la 2da query de
+qa/snapshot_control.sql). Baseline por fila ANTES de cualquier actividad QA (Fase 0):
+
+Fecha        TotalTurnos Atendidos Cancelados NoAsistio Disponibles FacturacionTotal CobrosPend NuevosPac Chk
+02/08/2026             0         0          0         0           0             0.00       0.00         0    1
+03/08/2026             0         0          0         0           0             0.00       0.00         0    1
+05/08/2026             8         0          0         0           8             0.00       0.00         0    524297
+10/08/2026             8         0          0         0           8             0.00       0.00         0    524297
+19/08/2026             8         0          0         0           8             0.00       0.00         0    524297
+23/08/2026             0         0          0         0           0             0.00       0.00         0    1
+27/08/2026             0         0          0         0           0             0.00       0.00         0    1
+01/09/2026             8         0          0         0           8             0.00       0.00         0    524297
+02/09/2026            16         6          8         0           2        114300.00    5500.00         0    -1524258648
+09/09/2026            16         0          0         0          16             0.00       0.00         0    1048593
+
+10 filas. NO existia fila para 23/09/2026 (hoy) en el momento de este snapshot original — se creo
+recien durante la sesion de QA (contaminada con datos QA mientras la suite estuvo corriendo).
+
+**Para Fase 9**: las 10 filas de arriba (todas con Fecha < 23/09/2026) NUNCA se tocan durante
+esta suite de QA (ningun paso llama a /dashboard/recalcular para esas fechas) — tienen que seguir
+EXACTAS despues de la limpieza, byte a byte. La fila de HOY (23/09/2026) se recalcula
+explicitamente en Fase 9 (POST /api/reportes/dashboard/recalcular?fecha=2026-09-23) despues de
+qa_cleanup.sql, y su resultado se valida contra una consulta SQL independiente sobre Turnos/
+Facturacion ya limpios de esa fecha — no contra este baseline (que es de ANTES de que existiera
+la fila, y por lo tanto no aplica como punto de comparacion para esa fecha puntual).

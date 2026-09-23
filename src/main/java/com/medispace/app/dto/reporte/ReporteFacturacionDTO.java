@@ -20,6 +20,9 @@ public class ReporteFacturacionDTO {
     private BigDecimal totalFacturado;
     private BigDecimal totalCobrado;
     private BigDecimal totalPendiente;
-    private BigDecimal totalCopago;
+    // RN-025: lo que le corresponde reclamarle a la obra social en el período (Total - lo
+    // cobrado en mano) — reemplaza "totalCopago", que quedaba redundante con totalFacturado una
+    // vez que Facturacion.importeCopago pasó a representar lo cobrado en mano.
+    private BigDecimal totalCubiertoOs;
     private Long cantidadTurnos;
 }

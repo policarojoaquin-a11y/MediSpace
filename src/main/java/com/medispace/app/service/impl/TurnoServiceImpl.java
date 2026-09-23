@@ -25,9 +25,16 @@ public class TurnoServiceImpl implements TurnoService {
     private final TurnoRepository turnoRepository;
     private final PacienteRepository pacienteRepository;
     private final PrestacionMedicaRepository prestacionMedicaRepository;
+    private final MedicoRepository medicoRepository;
+    private final FacturacionRepository facturacionRepository;
     private final FacturacionService facturacionService;
 
+    // Estados del turno en los que puede existir una facturación asociada.
+    private static final List<String> ESTADOS_CON_FACTURA = List.of("EN_ESPERA", "ATENDIDO");
+
     private static final List<String> ESTADOS_OCUPADOS = List.of("RESERVADO", "EN_ESPERA");
+    // RN-004 / RN-021: turnos que no se modifican al cancelar un día.
+    private static final List<String> ESTADOS_CERRADOS = List.of("ATENDIDO", "CANCELADO", "NO_ASISTIO");
 
     @Override
     @Transactional
@@ -153,9 +160,18 @@ public class TurnoServiceImpl implements TurnoService {
 
         turno = turnoRepository.save(turno);
 
-        // RF-F1: Al pasar un turno a "Atendido" se genera automáticamente un registro de facturación pendiente
-        if ("ATENDIDO".equalsIgnoreCase(nuevoEstado)) {
+        // RF-F1: el registro de facturación pendiente se genera cuando el paciente pasa a
+        // "En Espera" (así la administración puede cobrar mientras espera) o directo a
+        // "Atendido". crearFacturacionAutomatica es idempotente: no duplica si ya existe.
+        if (("EN_ESPERA".equalsIgnoreCase(nuevoEstado) || "ATENDIDO".equalsIgnoreCase(nuevoEstado))
+                && turno.getPaciente() != null) {
             facturacionService.crearFacturacionAutomatica(turno);
+        }
+        // Si el turno se cancela o se marca "No Asistió" habiendo generado ya la factura
+        // (el paciente estuvo En Espera), esa factura se anula — si no, quedaría en PENDIENTE
+        // y bloquearía la liquidación del médico (RN-005).
+        if ("CANCELADO".equalsIgnoreCase(nuevoEstado) || "NO_ASISTIO".equalsIgnoreCase(nuevoEstado)) {
+            facturacionService.anularFacturacionDeTurno(idTurno);
         }
 
         return mapToDTO(turno);
@@ -206,7 +222,86 @@ public class TurnoServiceImpl implements TurnoService {
         turnoRepository.delete(turno);
     }
 
+    @Override
+    @Transactional
+    public CancelacionDiaResponseDTO cancelarDiaMedico(CancelarDiaMedicoDTO dto) {
+        if (dto.getIdMedico() == null || dto.getFecha() == null) {
+            throw new BusinessRuleException("Médico y fecha son obligatorios para cancelar un día.");
+        }
+        Medico medico = medicoRepository.findById(dto.getIdMedico())
+                .orElseThrow(() -> new BusinessRuleException("Médico no encontrado."));
+
+        LocalDate desde = dto.getFecha();
+        LocalDate hasta = dto.getFechaHasta() != null ? dto.getFechaHasta() : desde;
+        if (hasta.isBefore(desde)) {
+            throw new BusinessRuleException("Rango de fechas inválido: 'hasta' es anterior a 'desde'.");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        List<Turno> turnos = turnoRepository.findByMedicoIdMedicoAndFechaHoraBetween(
+                medico.getIdMedico(), desde.atStartOfDay(), hasta.atTime(LocalTime.MAX));
+
+        List<Turno> aCancelar = new ArrayList<>();
+        List<PacienteAContactarDTO> contactar = new ArrayList<>();
+        List<Integer> turnosConFacturaAAnular = new ArrayList<>();
+        int disponibles = 0;
+        int reservados = 0;
+
+        for (Turno t : turnos) {
+            String estado = t.getEstado() == null ? "" : t.getEstado().toUpperCase(Locale.ROOT);
+            // RN-021 / RN-004: no se tocan turnos ya cerrados (ATENDIDO/CANCELADO/NO_ASISTIO)
+            // ni los que ya transcurrieron.
+            if (ESTADOS_CERRADOS.contains(estado) || !t.getFechaHora().isAfter(ahora)) {
+                continue;
+            }
+            if (ESTADOS_OCUPADOS.contains(estado)) {
+                reservados++;
+                if (t.getPaciente() != null) {
+                    contactar.add(PacienteAContactarDTO.builder()
+                            .nombrePaciente(t.getPaciente().getNombre() + " " + t.getPaciente().getApellido())
+                            .telefonoPaciente(t.getPaciente().getTelefono())
+                            .fechaHora(t.getFechaHora())
+                            .estadoPrevio(estado)
+                            .build());
+                }
+                // Un turno EN_ESPERA ya generó su facturación pendiente (RF-F1): al cancelarlo
+                // hay que anularla (RN-005).
+                if ("EN_ESPERA".equals(estado)) {
+                    turnosConFacturaAAnular.add(t.getIdTurno());
+                }
+            } else {
+                disponibles++;
+            }
+            t.setEstado("CANCELADO");
+            aCancelar.add(t);
+        }
+
+        turnoRepository.saveAll(aCancelar);
+        turnosConFacturaAAnular.forEach(facturacionService::anularFacturacionDeTurno);
+        contactar.sort(java.util.Comparator.comparing(PacienteAContactarDTO::getFechaHora));
+
+        return CancelacionDiaResponseDTO.builder()
+                .idMedico(medico.getIdMedico())
+                .fecha(desde)
+                .fechaHasta(dto.getFechaHasta())
+                .motivo(dto.getMotivo())
+                .turnosCancelados(aCancelar.size())
+                .disponiblesCancelados(disponibles)
+                .reservadosCancelados(reservados)
+                .pacientesAContactar(contactar)
+                .build();
+    }
+
     private TurnoResponseDTO mapToDTO(Turno t) {
+        Integer idFacturacion = null;
+        String estadoPagoFacturacion = null;
+        if (t.getEstado() != null && ESTADOS_CON_FACTURA.contains(t.getEstado().toUpperCase(Locale.ROOT))) {
+            var factura = facturacionRepository.findByTurnoIdTurno(t.getIdTurno()).orElse(null);
+            if (factura != null) {
+                idFacturacion = factura.getIdFacturacion();
+                estadoPagoFacturacion = factura.getEstadoPago();
+            }
+        }
         return TurnoResponseDTO.builder()
                 .idTurno(t.getIdTurno())
                 .idMedico(t.getMedico().getIdMedico())
@@ -226,6 +321,8 @@ public class TurnoServiceImpl implements TurnoService {
                 .metodoPagoPlanificado(t.getMetodoPagoPlanificado())
                 .obraSocialPlanificada(t.getObraSocialPlanificada())
                 .importeCopagoPlanificado(t.getImporteCopagoPlanificado())
+                .idFacturacion(idFacturacion)
+                .estadoPagoFacturacion(estadoPagoFacturacion)
                 .build();
     }
 }

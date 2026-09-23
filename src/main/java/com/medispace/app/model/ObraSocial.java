@@ -24,6 +24,20 @@ public class ObraSocial {
     @Column(name = "Nombre", nullable = false, length = 100)
     private String nombre;
 
+    @Column(name = "Codigo_Sigla", length = 20)
+    private String codigoSigla;
+
+    // "Plan" es palabra reservada en SQL Server — las comillas invertidas le indican a
+    // Hibernate que debe citarla (`[Plan]`) en el DDL y en cada query generada, no solo acá.
+    @Column(name = "`Plan`", length = 50)
+    private String plan;
+
+    @Column(name = "Requiere_Bono", nullable = false)
+    private Boolean requiereBono = false;
+
+    @Column(name = "Observaciones", length = 500)
+    private String observaciones;
+
     @Column(name = "Visible", nullable = false)
     private Boolean visible = true;
 }

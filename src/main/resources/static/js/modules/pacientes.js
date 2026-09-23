@@ -15,7 +15,39 @@ async function populateObraSocialSelect(selectedId) {
     opt.textContent = os.nombre;
     sel.appendChild(opt);
   });
+  const optNueva = document.createElement('option');
+  optNueva.value = '__new__';
+  optNueva.textContent = '+ Nueva obra social…';
+  sel.appendChild(optNueva);
   sel.value = selectedId || '';
+  document.getElementById('pac-obra-social-nueva-inline')?.classList.add('hidden');
+}
+
+document.getElementById('pac-obra-social')?.addEventListener('change', (e) => {
+  const inline = document.getElementById('pac-obra-social-nueva-inline');
+  if (e.target.value === '__new__') {
+    inline.classList.remove('hidden');
+    document.getElementById('pac-obra-social-nueva-nombre').value = '';
+    document.getElementById('pac-obra-social-nueva-nombre').focus();
+  } else {
+    inline.classList.add('hidden');
+  }
+});
+
+async function confirmarNuevaObraSocialPaciente() {
+  const nombre = document.getElementById('pac-obra-social-nueva-nombre').value.trim();
+  if (!nombre) {
+    Toast.error('Ingresá un nombre para la nueva obra social.');
+    return;
+  }
+  try {
+    const nueva = await Api.createObraSocial({ nombre });
+    obrasSocialesCache.push(nueva);
+    await populateObraSocialSelect(nueva.idObraSocial);
+    Toast.success('Obra social agregada.');
+  } catch (e) {
+    Toast.error(e.message);
+  }
 }
 
 function badgeEstadoPaciente(estado) {
@@ -24,6 +56,11 @@ function badgeEstadoPaciente(estado) {
 }
 
 async function loadPacientes() {
+  // M1 (spec.md §2.1): GERENTE quedó solo lectura en Pacientes — el backend ya devuelve 403
+  // para alta/edición/baja, se oculta el botón como defensa en profundidad.
+  const btnNuevo = document.getElementById('btn-nuevo-paciente');
+  if (btnNuevo) btnNuevo.classList.toggle('hidden', getRol() === 'GERENTE');
+
   const tbody = document.getElementById('tabla-pacientes');
   tbody.innerHTML = `<tr><td colspan="6"><div class="loading-overlay"><div class="spinner"></div><span>Cargando…</span></div></td></tr>`;
   try {
@@ -44,6 +81,8 @@ function renderPacientes(data) {
   // El backend ya devuelve 403 para este rol — se oculta el botón como defensa en profundidad,
   // la validación real sigue siendo la del backend.
   const puedeVerHC = getRol() !== 'GERENTE';
+  // M1 (spec.md §2.1): GERENTE quedó solo lectura en Pacientes — mismo criterio que arriba.
+  const puedeEditar = getRol() !== 'GERENTE';
 
   tbody.innerHTML = data.map(p => `
     <tr>
@@ -54,16 +93,18 @@ function renderPacientes(data) {
       <td>${badgeEstadoPaciente(p.estado)}</td>
       <td>
         <div class="table-actions">
+          ${puedeEditar ? `
           <button class="btn-icon" title="Editar" onclick="editarPaciente(${p.idPaciente})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2"/></svg>
-          </button>
+          </button>` : ''}
           ${puedeVerHC ? `
           <button class="btn-icon" title="Historia Clínica" onclick="abrirHCPaciente(${p.idPaciente})" style="color:var(--azul)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/></svg>
           </button>` : ''}
+          ${puedeEditar ? `
           <button class="btn-icon" title="Dar de baja" onclick="bajaPaciente(${p.idPaciente})" style="color:var(--rojo)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="2"/></svg>
-          </button>
+          </button>` : ''}
         </div>
       </td>
     </tr>`).join('');
@@ -86,6 +127,11 @@ document.getElementById('btn-nuevo-paciente')?.addEventListener('click', async (
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  // Alta: el documento (DNI / Pasaporte) sí se puede escribir. En edición se bloquea (RN-008).
+  const dniEl = document.getElementById('pac-dni');
+  dniEl.readOnly = false;
+  dniEl.removeAttribute('title');
+  dniEl.classList.remove('input-readonly');
   document.getElementById('pac-fnac').value = '';
   document.getElementById('pac-estado').value = 'ACTIVO';
   await populateObraSocialSelect();
@@ -99,7 +145,12 @@ async function editarPaciente(id) {
   document.getElementById('modal-paciente-title').textContent = 'Editar Paciente';
   document.getElementById('pac-nombre').value      = p.nombre || '';
   document.getElementById('pac-apellido').value    = p.apellido || '';
-  document.getElementById('pac-dni').value         = p.dni || '';
+  // RN-008: el documento (DNI / Pasaporte) es inmutable una vez creado — no editable directamente.
+  const dniEl = document.getElementById('pac-dni');
+  dniEl.value = p.dni || '';
+  dniEl.readOnly = true;
+  dniEl.title = 'El documento (DNI / Pasaporte) no puede modificarse una vez creado el paciente (RN-008).';
+  dniEl.classList.add('input-readonly');
   document.getElementById('pac-fnac').value        = p.fechaNacimiento || '';
   document.getElementById('pac-telefono').value    = p.telefono || '';
   document.getElementById('pac-credencial').value  = p.numeroCredencial || '';
@@ -125,7 +176,7 @@ async function guardarPaciente() {
     estado:          document.getElementById('pac-estado').value,
   };
   if (!payload.nombre || !payload.apellido || !payload.dni || !payload.fechaNacimiento) {
-    Toast.error('Completá los campos obligatorios (nombre, apellido, DNI y fecha de nacimiento).');
+    Toast.error('Completá los campos obligatorios (nombre, apellido, DNI / Pasaporte y fecha de nacimiento).');
     return;
   }
   btn.disabled = true;

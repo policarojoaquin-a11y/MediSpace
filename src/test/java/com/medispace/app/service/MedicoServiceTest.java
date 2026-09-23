@@ -2,10 +2,14 @@ package com.medispace.app.service;
 
 import com.medispace.app.dto.UsuarioCreateDTO;
 import com.medispace.app.dto.medico.MedicoCreateDTO;
+import com.medispace.app.dto.medico.MedicoObraSocialDTO;
 import com.medispace.app.dto.medico.MedicoPrestacionDTO;
+import com.medispace.app.dto.medico.MedicoSelfUpdateDTO;
 import com.medispace.app.exception.BusinessRuleException;
 import com.medispace.app.model.Medico;
+import com.medispace.app.model.MedicoObraSocial;
 import com.medispace.app.model.MedicoPrestacion;
+import com.medispace.app.model.ObraSocial;
 import com.medispace.app.model.PrestacionMedica;
 import com.medispace.app.model.Usuario;
 import com.medispace.app.model.Especialidad;
@@ -20,7 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,6 +49,9 @@ public class MedicoServiceTest {
 
     @Mock
     private MedicoPrestacionRepository medicoPrestacionRepository;
+
+    @Mock
+    private MedicoObraSocialRepository medicoObraSocialRepository;
 
     @InjectMocks
     private MedicoServiceImpl medicoService;
@@ -73,7 +79,6 @@ public class MedicoServiceTest {
                 .matricula("MAT001")
                 .especialidad(especialidad)
                 .estado("ACTIVO")
-                .obrasSociales(new HashSet<>())
                 .build();
     }
 
@@ -196,6 +201,119 @@ public class MedicoServiceTest {
     }
 
     @Test
+    void testActualizarMisDatos_ActualizaNombreSinTocarEspecialidadNiImporteNiObrasSociales() {
+        Especialidad especialidadOriginal = medicoGuardado.getEspecialidad();
+        medicoGuardado.setImporteConsulta(new java.math.BigDecimal("5000.00"));
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+        when(medicoObraSocialRepository.findByMedicoIdMedico(1)).thenReturn(java.util.List.of());
+
+        MedicoSelfUpdateDTO dto = MedicoSelfUpdateDTO.builder()
+                .nombre("Dr. Juan Actualizado")
+                .apellido("Pérez")
+                .build();
+
+        var response = medicoService.actualizarMisDatos("medico@test.com", dto);
+
+        assertEquals("Dr. Juan Actualizado", medicoGuardado.getNombre());
+        // Especialidad, importe de consulta y obras sociales no forman parte de
+        // MedicoSelfUpdateDTO — deben permanecer intactos tras la autoedición. Las obras
+        // sociales con las que trabaja son admin-only (ver agregarObraSocial/eliminarObraSocial);
+        // lo único que el propio médico puede tocar es el coseguro de una relación existente,
+        // vía actualizarCoseguroPropio.
+        assertEquals(especialidadOriginal, medicoGuardado.getEspecialidad());
+        assertEquals(new java.math.BigDecimal("5000.00"), medicoGuardado.getImporteConsulta());
+        verify(medicoObraSocialRepository, never()).save(any());
+        assertNotNull(response);
+    }
+
+    @Test
+    void testActualizarCoseguroPropio_Success() {
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+        MedicoObraSocial existente = MedicoObraSocial.builder()
+                .idMedicoObraSocial(70).medico(medicoGuardado).obraSocial(os).build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoObraSocialRepository.findById(70)).thenReturn(Optional.of(existente));
+        when(medicoObraSocialRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+
+        MedicoObraSocialDTO dto = MedicoObraSocialDTO.builder()
+                .importeCoseguro(new java.math.BigDecimal("1500.00"))
+                .build();
+
+        MedicoObraSocialDTO response = medicoService.actualizarCoseguroPropio("medico@test.com", 70, dto);
+
+        assertEquals(new java.math.BigDecimal("1500.00"), response.getImporteCoseguro());
+        assertEquals(new java.math.BigDecimal("1500.00"), existente.getImporteCoseguro());
+    }
+
+    @Test
+    void testActualizarCoseguroPropio_DeOtroMedicoLanzaBusinessRuleException() {
+        Medico otroMedico = Medico.builder().idMedico(2).build();
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+        MedicoObraSocial deOtroMedico = MedicoObraSocial.builder()
+                .idMedicoObraSocial(71).medico(otroMedico).obraSocial(os).build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoObraSocialRepository.findById(71)).thenReturn(Optional.of(deOtroMedico));
+
+        MedicoObraSocialDTO dto = MedicoObraSocialDTO.builder()
+                .importeCoseguro(new java.math.BigDecimal("1500.00"))
+                .build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                medicoService.actualizarCoseguroPropio("medico@test.com", 71, dto));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("otro médico"));
+        verify(medicoObraSocialRepository, never()).save(any());
+    }
+
+    @Test
+    void testAgregarObraSocial_Success() {
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medicoGuardado));
+        when(obraSocialRepository.findById(9)).thenReturn(Optional.of(os));
+        when(medicoObraSocialRepository.findByMedicoIdMedicoAndObraSocialIdObraSocial(1, 9)).thenReturn(Optional.empty());
+        when(medicoObraSocialRepository.save(any())).thenAnswer(i -> {
+            MedicoObraSocial mos = i.getArgument(0);
+            mos.setIdMedicoObraSocial(80);
+            return mos;
+        });
+
+        MedicoObraSocialDTO dto = MedicoObraSocialDTO.builder()
+                .idObraSocial(9)
+                .importeCoseguro(new java.math.BigDecimal("1000.00"))
+                .build();
+
+        MedicoObraSocialDTO response = medicoService.agregarObraSocial(1, dto);
+
+        assertNotNull(response);
+        assertEquals(80, response.getIdMedicoObraSocial());
+        assertEquals("OSDE", response.getNombreObraSocial());
+        verify(medicoObraSocialRepository, times(1)).save(any());
+    }
+
+    @Test
+    void testAgregarObraSocial_DuplicadaLanzaBusinessRuleException() {
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+        MedicoObraSocial existente = MedicoObraSocial.builder().idMedicoObraSocial(80).medico(medicoGuardado).obraSocial(os).build();
+
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medicoGuardado));
+        when(obraSocialRepository.findById(9)).thenReturn(Optional.of(os));
+        when(medicoObraSocialRepository.findByMedicoIdMedicoAndObraSocialIdObraSocial(1, 9)).thenReturn(Optional.of(existente));
+
+        MedicoObraSocialDTO dto = MedicoObraSocialDTO.builder().idObraSocial(9).build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                medicoService.agregarObraSocial(1, dto));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("ya está asociada"));
+        verify(medicoObraSocialRepository, never()).save(any());
+    }
+
+    @Test
     void testEliminarPrestacion_BajaLogica() {
         PrestacionMedica prestacion = PrestacionMedica.builder().idPrestacion(1).nombre("Consulta general").build();
         MedicoPrestacion existente = MedicoPrestacion.builder().idMedicoPrestacion(50).medico(medicoGuardado).prestacion(prestacion).build();
@@ -205,5 +323,100 @@ public class MedicoServiceTest {
         medicoService.eliminarPrestacion(50);
 
         verify(medicoPrestacionRepository, times(1)).delete(existente);
+    }
+
+    // ---- Cartilla propia del médico (RN-017): agregar/editar/quitar sus propias prestaciones y
+    // obras sociales resolviendo el médico desde el email del JWT, con chequeo de pertenencia.
+
+    @Test
+    void testAgregarPrestacionPropia_ResuelveMedicoPorEmailYAgrega() {
+        PrestacionMedica prestacion = PrestacionMedica.builder().idPrestacion(1).nombre("Ecografía").build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medicoGuardado));
+        when(prestacionMedicaRepository.findById(1)).thenReturn(Optional.of(prestacion));
+        when(medicoPrestacionRepository.findByMedicoIdMedicoAndPrestacionIdPrestacion(1, 1)).thenReturn(Optional.empty());
+        when(medicoPrestacionRepository.save(any())).thenAnswer(i -> {
+            MedicoPrestacion mp = i.getArgument(0);
+            mp.setIdMedicoPrestacion(60);
+            return mp;
+        });
+
+        MedicoPrestacionDTO dto = MedicoPrestacionDTO.builder()
+                .idPrestacion(1).duracionEstimadaMin(20).importeParticular(new java.math.BigDecimal("8000.00")).build();
+
+        MedicoPrestacionDTO response = medicoService.agregarPrestacionPropia("medico@test.com", dto);
+
+        assertEquals(60, response.getIdMedicoPrestacion());
+        assertEquals("Ecografía", response.getNombrePrestacion());
+        verify(medicoPrestacionRepository, times(1)).save(any());
+    }
+
+    @Test
+    void testActualizarPrestacionPropia_DeOtroMedicoLanzaBusinessRuleException() {
+        Medico otroMedico = Medico.builder().idMedico(2).build();
+        PrestacionMedica prestacion = PrestacionMedica.builder().idPrestacion(1).nombre("Consulta general").build();
+        MedicoPrestacion deOtro = MedicoPrestacion.builder().idMedicoPrestacion(99).medico(otroMedico).prestacion(prestacion).build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoPrestacionRepository.findById(99)).thenReturn(Optional.of(deOtro));
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                medicoService.actualizarPrestacionPropia("medico@test.com", 99,
+                        MedicoPrestacionDTO.builder().duracionEstimadaMin(10).build()));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("otro médico"));
+        verify(medicoPrestacionRepository, never()).save(any());
+    }
+
+    @Test
+    void testEliminarPrestacionPropia_DeLaCartillaPropia_BajaLogica() {
+        PrestacionMedica prestacion = PrestacionMedica.builder().idPrestacion(1).nombre("Consulta general").build();
+        MedicoPrestacion propia = MedicoPrestacion.builder().idMedicoPrestacion(50).medico(medicoGuardado).prestacion(prestacion).build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoPrestacionRepository.findById(50)).thenReturn(Optional.of(propia));
+
+        medicoService.eliminarPrestacionPropia("medico@test.com", 50);
+
+        verify(medicoPrestacionRepository, times(1)).delete(propia);
+    }
+
+    @Test
+    void testAgregarObraSocialPropia_ResuelveMedicoPorEmailYAgrega() {
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medicoGuardado));
+        when(obraSocialRepository.findById(9)).thenReturn(Optional.of(os));
+        when(medicoObraSocialRepository.findByMedicoIdMedicoAndObraSocialIdObraSocial(1, 9)).thenReturn(Optional.empty());
+        when(medicoObraSocialRepository.save(any())).thenAnswer(i -> {
+            MedicoObraSocial mos = i.getArgument(0);
+            mos.setIdMedicoObraSocial(90);
+            return mos;
+        });
+
+        MedicoObraSocialDTO response = medicoService.agregarObraSocialPropia("medico@test.com",
+                MedicoObraSocialDTO.builder().idObraSocial(9).importeCoseguro(new java.math.BigDecimal("1200.00")).build());
+
+        assertEquals(90, response.getIdMedicoObraSocial());
+        assertEquals("OSDE", response.getNombreObraSocial());
+        verify(medicoObraSocialRepository, times(1)).save(any());
+    }
+
+    @Test
+    void testEliminarObraSocialPropia_DeOtroMedicoLanzaBusinessRuleException() {
+        Medico otroMedico = Medico.builder().idMedico(2).build();
+        ObraSocial os = ObraSocial.builder().idObraSocial(9).nombre("OSDE").build();
+        MedicoObraSocial deOtro = MedicoObraSocial.builder().idMedicoObraSocial(71).medico(otroMedico).obraSocial(os).build();
+
+        when(medicoRepository.findByUsuario_Email("medico@test.com")).thenReturn(Optional.of(medicoGuardado));
+        when(medicoObraSocialRepository.findById(71)).thenReturn(Optional.of(deOtro));
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                medicoService.eliminarObraSocialPropia("medico@test.com", 71));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("otro médico"));
+        verify(medicoObraSocialRepository, never()).delete(any());
     }
 }

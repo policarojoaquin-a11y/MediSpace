@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Data
 @Builder
@@ -17,5 +16,4 @@ public class MedicoUpdateDTO {
     private String apellido;
     private Integer idEspecialidad;
     private BigDecimal importeConsulta;
-    private List<Integer> idsObrasSociales;
 }

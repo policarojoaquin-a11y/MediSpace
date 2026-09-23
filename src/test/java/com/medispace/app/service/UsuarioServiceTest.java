@@ -2,7 +2,9 @@ package com.medispace.app.service;
 
 import com.medispace.app.dto.UsuarioCreateDTO;
 import com.medispace.app.exception.BusinessRuleException;
+import com.medispace.app.model.Medico;
 import com.medispace.app.model.Usuario;
+import com.medispace.app.repository.MedicoRepository;
 import com.medispace.app.repository.UsuarioRepository;
 import com.medispace.app.service.impl.UsuarioServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,9 @@ public class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private MedicoRepository medicoRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -86,5 +91,30 @@ public class UsuarioServiceTest {
         assertNotNull(resultado);
         assertEquals("MEDICO", resultado.getRol());
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
+    }
+
+    @Test
+    void testRN020_BloqueaBajaDeUsuarioConMedicoActivo() {
+        Usuario usuario = Usuario.builder().idUsuario(13).email("policarogabriel@gmail.com").rol("MEDICO").build();
+        when(usuarioRepository.findById(13)).thenReturn(Optional.of(usuario));
+        when(medicoRepository.findByUsuario_IdUsuario(13)).thenReturn(Optional.of(new Medico()));
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> {
+            usuarioService.eliminarUsuario(13);
+        });
+
+        assertTrue(ex.getMessage().contains("RN-020"));
+        verify(usuarioRepository, never()).delete(any());
+    }
+
+    @Test
+    void testEliminarUsuario_PermiteBajaSinMedicoAsociado() {
+        Usuario usuario = Usuario.builder().idUsuario(20).email("secretaria@medispace.com").rol("ADMINISTRATIVO").build();
+        when(usuarioRepository.findById(20)).thenReturn(Optional.of(usuario));
+        when(medicoRepository.findByUsuario_IdUsuario(20)).thenReturn(Optional.empty());
+
+        usuarioService.eliminarUsuario(20);
+
+        verify(usuarioRepository, times(1)).delete(usuario);
     }
 }

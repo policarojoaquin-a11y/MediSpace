@@ -31,4 +31,8 @@ public class TurnoResponseDTO {
     private String metodoPagoPlanificado;
     private String obraSocialPlanificada;
     private BigDecimal importeCopagoPlanificado;
+    // Facturación asociada (existe desde que el turno pasa a EN_ESPERA). Permite cobrar
+    // desde el tablero de turnos mientras el paciente espera, sin ir al módulo Facturación.
+    private Integer idFacturacion;
+    private String estadoPagoFacturacion; // PENDIENTE | PAGADO | ANULADO | ...
 }

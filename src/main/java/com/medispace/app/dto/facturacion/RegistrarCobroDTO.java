@@ -14,7 +14,8 @@ import java.math.BigDecimal;
 public class RegistrarCobroDTO {
     private String metodoPago; // EFECTIVO, TARJETA, TRANSFERENCIA, MERCADOPAGO
     private BigDecimal importeTotal;
-    private BigDecimal importeCubiertoOs;
+    // No hay campo "importeCubiertoOs" acá a propósito (RN-025): se calcula server-side como
+    // importeTotal - importeCopago, no se confía en un valor libre del formulario.
     private BigDecimal importeCopago;
     private String numeroComprobante;
 }

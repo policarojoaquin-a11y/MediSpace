@@ -45,11 +45,26 @@ public class ArrendamientoController {
         return ResponseEntity.ok(arrendamientoService.listarPorMedico(idMedico));
     }
 
+    // Hallazgo 3 (checklist 27/08): un MEDICO necesita ver la disponibilidad de todos los
+    // consultorios (día/horario ocupado), pero NO los porcentajes pactados en los contratos
+    // ajenos. Para el caller MEDICO se devuelven todos los contratos con los porcentajes y las
+    // observaciones enmascarados en las filas que no son propias.
     @GetMapping("/contratos")
-    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO')")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO', 'MEDICO')")
     public ResponseEntity<List<ArrendamientoResponseDTO>> listarContratos(
-            @RequestParam(required = false) Integer medicoId) {
-        return ResponseEntity.ok(arrendamientoService.listarContratos(medicoId));
+            @RequestParam(required = false) Integer medicoId, Authentication authentication) {
+        Integer idMedicoPropio = medicoAccessGuard.idMedicoPropioSiAplica(authentication);
+        List<ArrendamientoResponseDTO> contratos = arrendamientoService.listarContratos(medicoId);
+        if (idMedicoPropio != null) {
+            contratos.forEach(c -> {
+                if (!idMedicoPropio.equals(c.getIdMedico())) {
+                    c.setPorcentajeConsultorio(null);
+                    c.setPorcentajeMedico(null);
+                    c.setObservaciones(null);
+                }
+            });
+        }
+        return ResponseEntity.ok(contratos);
     }
 
     @PutMapping("/{id}/baja")

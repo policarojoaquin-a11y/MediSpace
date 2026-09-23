@@ -1,16 +1,22 @@
 package com.medispace.app.service;
 
 import com.medispace.app.dto.historiaclinica.EvolucionAnularDTO;
+import com.medispace.app.dto.historiaclinica.EvolucionCreateDTO;
 import com.medispace.app.dto.historiaclinica.EvolucionUpdateDTO;
 import com.medispace.app.dto.historiaclinica.HistoriaClinicaResponseDTO;
 import com.medispace.app.exception.BusinessRuleException;
+import com.medispace.app.model.AdjuntoHistoriaClinica;
 import com.medispace.app.model.EvolucionClinica;
 import com.medispace.app.model.HistoriaClinica;
 import com.medispace.app.model.Medico;
 import com.medispace.app.model.Paciente;
+import com.medispace.app.model.Usuario;
+import com.medispace.app.repository.AdjuntoHistoriaClinicaRepository;
 import com.medispace.app.repository.EvolucionClinicaRepository;
 import com.medispace.app.repository.HistoriaClinicaRepository;
 import com.medispace.app.repository.MedicoRepository;
+import com.medispace.app.repository.PacienteRepository;
+import com.medispace.app.repository.TurnoRepository;
 import com.medispace.app.service.impl.HistoriaClinicaServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +25,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +45,15 @@ public class HistoriaClinicaServiceTest {
 
     @Mock
     private MedicoRepository medicoRepository;
+
+    @Mock
+    private AdjuntoHistoriaClinicaRepository adjuntoHistoriaClinicaRepository;
+
+    @Mock
+    private PacienteRepository pacienteRepository;
+
+    @Mock
+    private TurnoRepository turnoRepository;
 
     @InjectMocks
     private HistoriaClinicaServiceImpl historiaClinicaService;
@@ -165,24 +181,25 @@ public class HistoriaClinicaServiceTest {
     }
 
     @Test
-    void testAdministrativoNoVeContenidoClinicoDeEvoluciones() {
+    void testAdministrativoVeContenidoClinicoCompleto() {
         when(historiaClinicaRepository.findByPacienteIdPaciente(50))
                 .thenReturn(Optional.of(evolucion.getHistoriaClinica()));
         when(evolucionClinicaRepository.findByHistoriaClinicaIdHistoriaClinicaOrderByFechaHoraDesc(10))
                 .thenReturn(List.of(evolucion));
 
-        HistoriaClinicaResponseDTO response = historiaClinicaService.obtenerHistoriaClinicaPorPaciente(50, "ADMINISTRATIVO");
+        Usuario admin = Usuario.builder().idUsuario(200).rol("ADMINISTRATIVO").build();
+        HistoriaClinicaResponseDTO response = historiaClinicaService.obtenerHistoriaClinicaPorPaciente(50, admin);
 
         assertEquals(1, response.getEvoluciones().size());
         var evolucionDTO = response.getEvoluciones().get(0);
-        // ADMINISTRATIVO ("Parcial", sección 4.5): confirma que la evolución existe (metadatos:
-        // fecha, médico) pero no accede a ningún campo de contenido clínico.
-        assertNull(evolucionDTO.getMotivoConsulta());
-        assertNull(evolucionDTO.getDiagnostico());
-        assertNull(evolucionDTO.getTratamiento());
-        assertNull(evolucionDTO.getIndicaciones());
-        assertNull(evolucionDTO.getEstudiosSolicitados());
-        assertNull(evolucionDTO.getObservaciones());
+        // Sección 4.5, "Ver historias clínicas: Sí" para ADMINISTRATIVO (alineado con el
+        // documento original): ve el contenido clínico completo, igual que MEDICO.
+        assertEquals("Dolor de cabeza", evolucionDTO.getMotivoConsulta());
+        assertEquals("Migraña", evolucionDTO.getDiagnostico());
+        assertEquals("Analgésicos", evolucionDTO.getTratamiento());
+        assertEquals("Reposo 48hs", evolucionDTO.getIndicaciones());
+        assertEquals("Resonancia magnética", evolucionDTO.getEstudiosSolicitados());
+        assertEquals("Paciente refiere episodios recurrentes", evolucionDTO.getObservaciones());
         assertNotNull(evolucionDTO.getFechaHora());
         assertNotNull(evolucionDTO.getNombreMedico());
     }
@@ -193,8 +210,11 @@ public class HistoriaClinicaServiceTest {
                 .thenReturn(Optional.of(evolucion.getHistoriaClinica()));
         when(evolucionClinicaRepository.findByHistoriaClinicaIdHistoriaClinicaOrderByFechaHoraDesc(10))
                 .thenReturn(List.of(evolucion));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_RESPONSABLE)).thenReturn(Optional.of(medicoResponsable));
+        when(pacienteRepository.existsVinculadoAMedico(1, 50)).thenReturn(true);
 
-        HistoriaClinicaResponseDTO response = historiaClinicaService.obtenerHistoriaClinicaPorPaciente(50, "MEDICO");
+        Usuario medicoUser = Usuario.builder().idUsuario(USUARIO_ID_RESPONSABLE).rol("MEDICO").build();
+        HistoriaClinicaResponseDTO response = historiaClinicaService.obtenerHistoriaClinicaPorPaciente(50, medicoUser);
 
         var evolucionDTO = response.getEvoluciones().get(0);
         assertEquals("Dolor de cabeza", evolucionDTO.getMotivoConsulta());
@@ -203,5 +223,105 @@ public class HistoriaClinicaServiceTest {
         assertEquals("Reposo 48hs", evolucionDTO.getIndicaciones());
         assertEquals("Resonancia magnética", evolucionDTO.getEstudiosSolicitados());
         assertEquals("Paciente refiere episodios recurrentes", evolucionDTO.getObservaciones());
+    }
+
+    @Test
+    void testMedicoNoAccedeHistoriaDePacienteAjeno() {
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_OTRO)).thenReturn(Optional.of(otroMedico));
+        when(pacienteRepository.existsVinculadoAMedico(2, 50)).thenReturn(false);
+
+        Usuario medicoUser = Usuario.builder().idUsuario(USUARIO_ID_OTRO).rol("MEDICO").build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> historiaClinicaService.obtenerHistoriaClinicaPorPaciente(50, medicoUser));
+
+        assertTrue(ex.getMessage().contains("RN-010"));
+        verify(historiaClinicaRepository, never()).findByPacienteIdPaciente(any());
+    }
+
+    @Test
+    void testMedicoNoDescargaAdjuntoDePacienteAjeno() {
+        AdjuntoHistoriaClinica adjunto = AdjuntoHistoriaClinica.builder()
+                .idAdjunto(7).evolucion(evolucion).nombreArchivo("estudio.pdf").rutaArchivo("x.pdf").build();
+        when(adjuntoHistoriaClinicaRepository.findById(7)).thenReturn(Optional.of(adjunto));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_OTRO)).thenReturn(Optional.of(otroMedico));
+        when(pacienteRepository.existsVinculadoAMedico(2, 50)).thenReturn(false);
+
+        Usuario medicoUser = Usuario.builder().idUsuario(USUARIO_ID_OTRO).rol("MEDICO").build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> historiaClinicaService.descargarAdjunto(7, medicoUser));
+
+        assertTrue(ex.getMessage().contains("RN-010"));
+    }
+
+    @Test
+    void testRN010_AgregarEvolucionBloqueadaSiPacienteNoEstaVinculado() {
+        HistoriaClinica hc = evolucion.getHistoriaClinica();
+        when(historiaClinicaRepository.findById(10)).thenReturn(Optional.of(hc));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_OTRO)).thenReturn(Optional.of(otroMedico));
+        when(pacienteRepository.existsVinculadoAMedico(2, 50)).thenReturn(false);
+
+        EvolucionCreateDTO dto = EvolucionCreateDTO.builder()
+                .motivoConsulta("Control")
+                .diagnostico("s/p")
+                .build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                historiaClinicaService.agregarEvolucion(10, USUARIO_ID_OTRO, dto));
+
+        assertTrue(ex.getMessage().contains("RN-010"));
+        verify(evolucionClinicaRepository, never()).save(any());
+    }
+
+    @Test
+    void testRN010_AgregarEvolucionPermitidaSiPacienteVinculado() {
+        HistoriaClinica hc = evolucion.getHistoriaClinica();
+        when(historiaClinicaRepository.findById(10)).thenReturn(Optional.of(hc));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_RESPONSABLE)).thenReturn(Optional.of(medicoResponsable));
+        when(pacienteRepository.existsVinculadoAMedico(1, 50)).thenReturn(true);
+        when(evolucionClinicaRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+
+        EvolucionCreateDTO dto = EvolucionCreateDTO.builder()
+                .motivoConsulta("Control")
+                .diagnostico("Estable")
+                .build();
+
+        var res = historiaClinicaService.agregarEvolucion(10, USUARIO_ID_RESPONSABLE, dto);
+
+        assertNotNull(res);
+        verify(evolucionClinicaRepository).save(any());
+    }
+
+    @Test
+    void testAdjuntoRechazaExtensionNoPermitida() {
+        when(evolucionClinicaRepository.findById(100)).thenReturn(Optional.of(evolucion));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_RESPONSABLE)).thenReturn(Optional.of(medicoResponsable));
+
+        Usuario medicoUser = Usuario.builder().idUsuario(USUARIO_ID_RESPONSABLE).rol("MEDICO").build();
+        MockMultipartFile archivo = new MockMultipartFile("file", "virus.exe", "application/octet-stream", "contenido".getBytes());
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> {
+            historiaClinicaService.agregarAdjunto(100, medicoUser, archivo);
+        });
+
+        assertTrue(ex.getMessage().contains("RF-H3"));
+        verify(adjuntoHistoriaClinicaRepository, never()).save(any());
+    }
+
+    @Test
+    void testAdjuntoBloqueaSubidaDeOtroMedico() {
+        when(evolucionClinicaRepository.findById(100)).thenReturn(Optional.of(evolucion));
+        when(medicoRepository.findByUsuario_IdUsuario(USUARIO_ID_OTRO)).thenReturn(Optional.of(otroMedico));
+
+        Usuario medicoUser = Usuario.builder().idUsuario(USUARIO_ID_OTRO).rol("MEDICO").build();
+        MockMultipartFile archivo = new MockMultipartFile("file", "estudio.pdf", "application/pdf", "contenido".getBytes());
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> {
+            historiaClinicaService.agregarAdjunto(100, medicoUser, archivo);
+        });
+
+        assertTrue(ex.getMessage().contains("RN-010"));
+        verify(adjuntoHistoriaClinicaRepository, never()).save(any());
     }
 }

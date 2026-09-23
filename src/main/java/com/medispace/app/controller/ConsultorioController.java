@@ -1,6 +1,7 @@
 package com.medispace.app.controller;
 
 import com.medispace.app.dto.ConsultorioCreateDTO;
+import com.medispace.app.dto.ConsultorioEstadoDTO;
 import com.medispace.app.dto.ConsultorioResponseDTO;
 import com.medispace.app.service.ConsultorioService;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +30,13 @@ public class ConsultorioController {
     public ResponseEntity<ConsultorioResponseDTO> crearConsultorio(@RequestBody ConsultorioCreateDTO dto) {
         ConsultorioResponseDTO response = consultorioService.crearConsultorio(dto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO')")
+    public ResponseEntity<ConsultorioResponseDTO> actualizarEstado(
+            @PathVariable Integer id,
+            @RequestBody ConsultorioEstadoDTO dto) {
+        return ResponseEntity.ok(consultorioService.actualizarEstado(id, dto.getEstado()));
     }
 }

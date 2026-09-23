@@ -12,4 +12,10 @@ import lombok.NoArgsConstructor;
 public class ObraSocialResponseDTO {
     private Integer idObraSocial;
     private String nombre;
+    private String codigoSigla;
+    private String plan;
+    private Boolean requiereBono;
+    private String observaciones;
+    private Boolean visible;
+    private Long cantidadMedicosAsociados;
 }

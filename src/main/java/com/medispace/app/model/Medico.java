@@ -8,8 +8,6 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "Medicos")
@@ -58,12 +56,4 @@ public class Medico {
 
     @Column(name = "Fecha_Inicio_Actividad", nullable = false)
     private LocalDate fechaInicioActividad;
-
-    @ManyToMany
-    @JoinTable(
-        name = "Medico_ObraSocial",
-        joinColumns = @JoinColumn(name = "ID_Medico"),
-        inverseJoinColumns = @JoinColumn(name = "ID_ObraSocial")
-    )
-    private Set<ObraSocial> obrasSociales = new HashSet<>();
 }

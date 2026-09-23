@@ -1,0 +1,39 @@
+{
+    "especialidades": {
+        "QA_Cardiología": 5,
+        "QA_Pediatría": 6,
+        "QA_Clínica": 7
+    },
+    "obrasSociales": {
+        "QA_OSDE": 10,
+        "QA_IOMA": 11,
+        "QA_PAMI": 12
+    },
+    "consultorios": {
+        "QA-1": 8,
+        "QA-2": 9,
+        "QA-3": 10
+    },
+    "medicos": {
+        "QA_Dr_Cardio": 9,
+        "QA_Dra_Pedia": 10,
+        "QA_Dr_Clinico": 11
+    },
+    "medicoObraSocial": {
+        "QA_Dr_Cardio+QA_OSDE": 15,
+        "QA_Dra_Pedia+QA_IOMA": 16
+    },
+    "usuarios": {
+        "qa.gerente@qa.test": 28,
+        "qa.admin1@qa.test": 29,
+        "qa.admin2@qa.test": 30
+    },
+    "pacientes": {
+        "QA_P1": 15,
+        "QA_P2": 16,
+        "QA_P3": 17,
+        "QA_P4": 18,
+        "QA_P5": 19,
+        "QA_P6": 20
+    }
+}

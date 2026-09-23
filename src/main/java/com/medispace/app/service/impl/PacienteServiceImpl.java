@@ -12,6 +12,7 @@ import com.medispace.app.repository.ObraSocialRepository;
 import com.medispace.app.repository.PacienteRepository;
 import com.medispace.app.service.PacienteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,10 +31,12 @@ public class PacienteServiceImpl implements PacienteService {
     @Override
     @Transactional
     public PacienteResponseDTO crearPaciente(PacienteCreateDTO dto) {
-        // RN-009: DNI único, incluso entre inactivos
+        // RN-009: documento único, incluso entre inactivos. El identificador es "DNI / Pasaporte"
+        // (Entrega §2: "DNI / Pasaporte (requerido – único)") — para un paciente extranjero sin
+        // DNI argentino se carga el número de pasaporte en el mismo campo.
         long countDni = pacienteRepository.countByDniIncludingInactive(dto.getDni());
         if (countDni > 0) {
-            throw new BusinessRuleException("RN-009: El DNI ya se encuentra registrado (incluso si está inactivo).");
+            throw new BusinessRuleException("RN-009: El documento (DNI / Pasaporte) ya se encuentra registrado (incluso si está inactivo).");
         }
 
         ObraSocial os = null;
@@ -77,9 +80,9 @@ public class PacienteServiceImpl implements PacienteService {
         Paciente paciente = pacienteRepository.findById(id)
                 .orElseThrow(() -> new BusinessRuleException("Paciente no encontrado."));
 
-        // RN-008: DNI inmutable
+        // RN-008: documento (DNI / Pasaporte) inmutable
         if (dto.getDni() != null && !dto.getDni().equals(paciente.getDni())) {
-            throw new BusinessRuleException("RN-008: El DNI del paciente es inmutable una vez creado.");
+            throw new BusinessRuleException("RN-008: El documento (DNI / Pasaporte) del paciente es inmutable una vez creado.");
         }
 
         ObraSocial os = null;
@@ -102,15 +105,21 @@ public class PacienteServiceImpl implements PacienteService {
     }
 
     @Override
-    public PacienteResponseDTO obtenerPaciente(Integer id) {
+    public PacienteResponseDTO obtenerPaciente(Integer id, Integer idMedicoFiltro) {
         Paciente paciente = pacienteRepository.findById(id)
                 .orElseThrow(() -> new BusinessRuleException("Paciente no encontrado."));
+        if (idMedicoFiltro != null && !pacienteRepository.existsVinculadoAMedico(idMedicoFiltro, id)) {
+            throw new AccessDeniedException("Este paciente no está vinculado a tus turnos u historias clínicas.");
+        }
         return mapToDTO(paciente);
     }
 
     @Override
-    public List<PacienteResponseDTO> listarPacientes() {
-        return pacienteRepository.findAll().stream()
+    public List<PacienteResponseDTO> listarPacientes(Integer idMedicoFiltro) {
+        List<Paciente> pacientes = idMedicoFiltro != null
+                ? pacienteRepository.findVinculadosAMedico(idMedicoFiltro)
+                : pacienteRepository.findAll();
+        return pacientes.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }

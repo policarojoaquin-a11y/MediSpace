@@ -8,6 +8,15 @@ const DIA_LABEL = {
   JUEVES: 'Jueves', VIERNES: 'Viernes', SABADO: 'Sábado', DOMINGO: 'Domingo',
 };
 
+// "Ocupado" no está acá — se deriva de si hay un contrato activo en el horario actual, no es un
+// estado que se fija a mano (ver ConsultorioServiceImpl.ESTADOS_VALIDOS en el backend).
+const CONSULTORIO_ESTADO_LABEL = {
+  DISPONIBLE: 'Disponible',
+  BLOQUEADO: 'Bloqueado',
+  EN_MANTENIMIENTO: 'En mantenimiento',
+  FUERA_DE_SERVICIO: 'Fuera de servicio',
+};
+
 async function fetchArrendamientosData() {
   arrendamientosData = await Api.getContratos();
   return arrendamientosData;
@@ -37,9 +46,16 @@ function renderConsultoriosGrid(consultorios, arrendamientos) {
     grid.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2"/></svg><h3>Sin consultorios</h3><p>Registrá el primer consultorio.</p></div>`;
     return;
   }
+  const puedeCambiarEstado = ['GERENTE', 'ADMINISTRATIVO'].includes(getRol());
+
   grid.innerHTML = consultorios.map(c => {
+    const estadoManual = c.estado && c.estado !== 'DISPONIBLE';
     const ocupantes = (arrendamientos || []).filter(a => a.idConsultorio === c.idConsultorio && a.estado === 'ACTIVO');
-    const ocupado = ocupantes.length > 0;
+    // Un estado manual (Bloqueado/Mantenimiento/Fuera de servicio) pisa el cálculo de
+    // ocupado-por-contrato — el consultorio no está disponible igual aunque tenga contratos.
+    const ocupado = !estadoManual && ocupantes.length > 0;
+    const badgeLabel = estadoManual ? (CONSULTORIO_ESTADO_LABEL[c.estado] || c.estado) : (ocupado ? 'OCUPADO' : 'DISPONIBLE');
+    const badgeClase = estadoManual ? 'badge-inactivo' : (ocupado ? 'badge-en-espera' : 'badge-disponible');
     const ocupantesHtml = ocupado
       ? ocupantes.map(a => `
           <div class="consultorio-ocupante">
@@ -49,18 +65,35 @@ function renderConsultoriosGrid(consultorios, arrendamientos) {
       : `<div class="text-muted text-sm">Sin ocupantes</div>`;
 
     return `
-      <div class="consultorio-card ${ocupado ? 'ocupado' : 'disponible'}">
+      <div class="consultorio-card ${estadoManual ? 'bloqueado' : (ocupado ? 'ocupado' : 'disponible')}">
         <div class="consultorio-card-header">
           <span class="consultorio-numero">Consultorio ${c.numeroConsultorio}</span>
-          <span class="badge ${ocupado ? 'badge-en-espera' : 'badge-disponible'}">${ocupado ? 'OCUPADO' : 'DISPONIBLE'}</span>
+          <span class="badge ${badgeClase}">${badgeLabel}</span>
         </div>
         <div class="consultorio-card-body">
           ${c.ubicacion ? `<div class="consultorio-meta">${c.ubicacion}</div>` : ''}
           ${c.equipamiento ? `<div class="consultorio-meta">${c.equipamiento}</div>` : ''}
           <div class="consultorio-ocupantes">${ocupantesHtml}</div>
+          ${puedeCambiarEstado ? `
+          <select class="search-input" style="margin-top:8px;" onchange="cambiarEstadoConsultorio(${c.idConsultorio}, this.value)">
+            <option value="">Cambiar estado…</option>
+            ${Object.entries(CONSULTORIO_ESTADO_LABEL).map(([value, label]) => `<option value="${value}" ${c.estado === value ? 'selected' : ''}>${label}</option>`).join('')}
+          </select>` : ''}
         </div>
       </div>`;
   }).join('');
+}
+
+async function cambiarEstadoConsultorio(idConsultorio, estado) {
+  if (!estado) return;
+  try {
+    const res = await Api.updateConsultorioEstado(idConsultorio, estado);
+    Toast.success('Estado del consultorio actualizado.');
+    if (res && res.advertencia) Toast.show('warning', res.advertencia, 8000);
+    loadArrendamientos();
+  } catch (e) {
+    Toast.error(e.message);
+  }
 }
 
 document.getElementById('btn-nuevo-consultorio')?.addEventListener('click', () => {
@@ -156,6 +189,10 @@ function renderContratos(data) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2"/></svg><h3>Sin contratos</h3><p>No hay contratos de arrendamiento registrados.</p></div></td></tr>`;
     return;
   }
+  // Solo GERENTE puede dar de baja un contrato (el backend además lo exige). Para MEDICO el
+  // botón directamente no aparece (antes se mostraba y siempre fallaba — checklist 27/08).
+  const puedeDarBaja = getRol() === 'GERENTE';
+  // El backend enmascara los porcentajes de contratos ajenos para el rol MEDICO (Hallazgo 3).
   tbody.innerHTML = data.map(a => `
     <tr>
       <td>${a.nombreMedico || `Médico #${a.idMedico}`}</td>
@@ -163,10 +200,10 @@ function renderContratos(data) {
       <td>${a.fechaInicio} - ${a.fechaFin || 'Indefinido'}</td>
       <td>${DIA_LABEL[a.diaSemana] || a.diaSemana || '—'}</td>
       <td>${a.horaInicio || '—'} - ${a.horaFin || '—'}</td>
-      <td>${a.porcentajeConsultorio ?? 30}%</td>
+      <td>${a.porcentajeConsultorio != null ? a.porcentajeConsultorio + '%' : '—'}</td>
       <td><span class="badge ${a.estado === 'ACTIVO' ? 'badge-activo' : 'badge-inactivo'}">${a.estado}</span></td>
       <td>
-        ${a.estado === 'ACTIVO' ? `<button class="btn btn-sm" style="background:var(--rojo-light);color:var(--rojo-dim);border:none;cursor:pointer;" onclick="darDeBajaArrendamiento(${a.idArrendamiento})">Dar de baja</button>` : '—'}
+        ${(puedeDarBaja && a.estado === 'ACTIVO') ? `<button class="btn btn-sm" style="background:var(--rojo-light);color:var(--rojo-dim);border:none;cursor:pointer;" onclick="darDeBajaArrendamiento(${a.idArrendamiento})">Dar de baja</button>` : '—'}
       </td>
     </tr>`).join('');
 }

@@ -56,16 +56,20 @@ const NAV_CONFIG = {
   GERENTE: [
     { id: 'dashboard',      label: 'Dashboard',           icon: 'grid' },
     { section: 'Gestión' },
+    { id: 'usuarios',       label: 'Gestionar Usuarios',    icon: 'user-check' },
     { id: 'medicos',        label: 'Médicos',              icon: 'user-check' },
     { id: 'pacientes',      label: 'Pacientes',            icon: 'users' },
+    { id: 'obras-sociales', label: 'Obras Sociales',       icon: 'file-text' },
     { id: 'arrendamientos', label: 'Arrendamiento',        icon: 'home' },
     { id: 'contratos',      label: 'Contratos',            icon: 'file-text' },
     { section: 'Finanzas' },
     { id: 'facturacion',    label: 'Facturación',          icon: 'dollar' },
+    { id: 'liquidaciones',  label: 'Liquidaciones Médicas', icon: 'dollar' },
     { id: 'reportes',       label: 'Reportes',             icon: 'bar-chart' },
   ],
   ADMINISTRATIVO: [
     { id: 'pacientes',      label: 'Pacientes',            icon: 'users' },
+    { id: 'obras-sociales', label: 'Obras Sociales',       icon: 'file-text' },
     { id: 'turnos',         label: 'Turnos',               icon: 'calendar' },
     { section: 'Médicos & Espacios' },
     { id: 'medicos',        label: 'Médicos',              icon: 'user-check' },
@@ -73,13 +77,18 @@ const NAV_CONFIG = {
     { id: 'contratos',      label: 'Contratos',            icon: 'file-text' },
     { section: 'Finanzas' },
     { id: 'facturacion',    label: 'Facturación',          icon: 'dollar' },
+    { id: 'liquidaciones',  label: 'Liquidaciones Médicas', icon: 'dollar' },
+    { section: 'Administración' },
+    { id: 'usuarios',       label: 'Gestionar Usuarios',    icon: 'user-check' },
   ],
   MEDICO: [
     { id: 'turnos',            label: 'Mi Agenda',            icon: 'calendar' },
     { id: 'pacientes',         label: 'Mis Pacientes',        icon: 'users' },
     { id: 'historias',         label: 'Historias Clínicas',   icon: 'file-text' },
-    { id: 'facturacion',       label: 'Mis Liquidaciones',    icon: 'dollar' },
+    { id: 'liquidaciones',     label: 'Mis Liquidaciones',    icon: 'dollar' },
     { id: 'mis-prestaciones',  label: 'Mis Prestaciones',     icon: 'user-check' },
+    { id: 'arrendamientos',    label: 'Disponibilidad',       icon: 'home' },
+    { id: 'contratos',         label: 'Contratos',            icon: 'file-text' },
     { id: 'mis-datos',         label: 'Mis Datos',            icon: 'user' },
   ],
 };
@@ -155,10 +164,13 @@ function navigateTo(viewId, label) {
   // Load data for the module
   switch (viewId) {
     case 'dashboard':      loadDashboard(); break;
+    case 'usuarios':       loadUsuarios(); break;
     case 'pacientes':      loadPacientes(); break;
+    case 'obras-sociales': loadObrasSociales(); break;
     case 'medicos':        loadMedicos();   break;
     case 'turnos':         loadTurnos();    break;
     case 'facturacion':    loadFacturacion(); break;
+    case 'liquidaciones':  loadLiquidaciones(); break;
     case 'arrendamientos': loadArrendamientos(); break;
     case 'contratos':      loadContratos(); break;
     case 'mis-datos':      loadMisDatos(); break;

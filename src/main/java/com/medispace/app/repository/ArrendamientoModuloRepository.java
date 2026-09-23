@@ -32,18 +32,46 @@ public interface ArrendamientoModuloRepository extends JpaRepository<Arrendamien
             @Param("horaInicio") LocalTime horaInicio,
             @Param("horaFin") LocalTime horaFin);
 
+    // RN-023: Un médico no puede tener 2 contratos activos que se superpongan en día/horario,
+    // ni siquiera en consultorios distintos (no puede atender en dos lugares a la vez). Mismo
+    // criterio de superposición que countSuperposicionesConsultorio, filtrado por médico en vez
+    // de por consultorio.
+    @Query(value = "SELECT COUNT(*) FROM Arrendamiento_Modulo " +
+            "WHERE ID_Medico = :idMedico " +
+            "AND Dia_Semana = :diaSemana " +
+            "AND Estado = 'ACTIVO' " +
+            "AND Visible = 1 " +
+            "AND (Fecha_Fin IS NULL OR Fecha_Fin >= :fechaInicio) " +
+            "AND (:fechaFin IS NULL OR Fecha_Inicio <= :fechaFin) " +
+            "AND (Hora_Inicio < CAST(:horaFin AS TIME) AND Hora_Fin > CAST(:horaInicio AS TIME))", nativeQuery = true)
+    long countSuperposicionesMedico(
+            @Param("idMedico") Integer idMedico,
+            @Param("diaSemana") String diaSemana,
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin,
+            @Param("horaInicio") LocalTime horaInicio,
+            @Param("horaFin") LocalTime horaFin);
+
     // Contrato vigente de un médico en un consultorio para un día/hora/fecha dados — mismo
     // criterio de matching (médico + consultorio + día/horario) que usa la generación
     // automática de turnos (TurnoServiceImpl.generarTurnosParaContrato), en sentido inverso.
     // Orden por Fecha_Inicio DESC para desempatar si dos contratos matchearan igual.
-    @Query("SELECT a FROM ArrendamientoModulo a " +
-            "WHERE a.medico.idMedico = :idMedico " +
-            "AND a.consultorio.idConsultorio = :idConsultorio " +
-            "AND a.diaSemana = :diaSemana " +
-            "AND a.estado = 'ACTIVO' " +
-            "AND a.horaInicio <= :hora AND a.horaFin > :hora " +
-            "AND a.fechaInicio <= :fecha AND (a.fechaFin IS NULL OR a.fechaFin >= :fecha) " +
-            "ORDER BY a.fechaInicio DESC")
+    //
+    // Query nativa (no JPQL): la variante JPQL original comparaba "a.horaInicio <= :hora"
+    // bindeando :hora como java.time.LocalTime, y Hibernate 6.4 + SQLServerDialect no lo
+    // casteaba correctamente contra la columna TIME de SQL Server (SQLServerException:
+    // "Los tipos de datos time y datetime son incompatibles..."), rompiendo el 100% de las
+    // invocaciones de este método — no solo cuando no había contrato. Se resuelve igual que
+    // countSuperposicionesConsultorio (arriba): CAST(:hora AS TIME) explícito en SQL nativo.
+    @Query(value = "SELECT * FROM Arrendamiento_Modulo " +
+            "WHERE ID_Medico = :idMedico " +
+            "AND ID_Consultorio = :idConsultorio " +
+            "AND Dia_Semana = :diaSemana " +
+            "AND Estado = 'ACTIVO' " +
+            "AND Visible = 1 " +
+            "AND (Hora_Inicio <= CAST(:hora AS TIME) AND Hora_Fin > CAST(:hora AS TIME)) " +
+            "AND Fecha_Inicio <= :fecha AND (Fecha_Fin IS NULL OR Fecha_Fin >= :fecha) " +
+            "ORDER BY Fecha_Inicio DESC", nativeQuery = true)
     List<ArrendamientoModulo> findContratoVigente(
             @Param("idMedico") Integer idMedico,
             @Param("idConsultorio") Integer idConsultorio,

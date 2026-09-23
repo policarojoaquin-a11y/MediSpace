@@ -21,6 +21,10 @@ CREATE TABLE Usuarios (
 CREATE TABLE ObraSocial (
     ID_ObraSocial   INT IDENTITY(1,1) PRIMARY KEY,
     Nombre          VARCHAR(100) NOT NULL,
+    Codigo_Sigla    VARCHAR(20) NULL,
+    [Plan]          VARCHAR(50) NULL, -- 'Plan' es palabra reservada en SQL Server
+    Requiere_Bono   BIT NOT NULL DEFAULT 0,
+    Observaciones   VARCHAR(500) NULL,
     Visible         BIT NOT NULL DEFAULT 1
 );
 
@@ -117,15 +121,23 @@ CREATE TABLE Agenda_Medico (
 );
 
 -- =========================
--- MEDICO_OBRASOCIAL (N:M)
+-- MEDICO_OBRASOCIAL (N:M, con datos particulares por médico)
+-- Importe_Coseguro es específico del arreglo de ESE médico con esa
+-- obra social (lo decide el médico), no un valor fijo de la obra
+-- social. Mismo patrón que Medico_Prestacion: baja lógica vía
+-- Visible, índice único filtrado evita duplicar una misma relación
+-- activa.
 -- =========================
 CREATE TABLE Medico_ObraSocial (
-    ID_Medico       INT NOT NULL,
-    ID_ObraSocial   INT NOT NULL,
-    CONSTRAINT PK_Medico_ObraSocial PRIMARY KEY (ID_Medico, ID_ObraSocial),
+    ID_Medico_ObraSocial    INT IDENTITY(1,1) PRIMARY KEY,
+    ID_Medico               INT NOT NULL,
+    ID_ObraSocial           INT NOT NULL,
+    Importe_Coseguro        DECIMAL(10,2) NULL,
+    Visible                 BIT NOT NULL DEFAULT 1,
     CONSTRAINT FK_MOS_Medico FOREIGN KEY (ID_Medico) REFERENCES Medicos(ID_Medico),
     CONSTRAINT FK_MOS_ObraSocial FOREIGN KEY (ID_ObraSocial) REFERENCES ObraSocial(ID_ObraSocial)
 );
+CREATE UNIQUE INDEX UX_MedicoObraSocial_Activo ON Medico_ObraSocial (ID_Medico, ID_ObraSocial) WHERE Visible = 1;
 
 -- =========================
 -- MEDICO_PRESTACION (N:M, con datos particulares por médico)

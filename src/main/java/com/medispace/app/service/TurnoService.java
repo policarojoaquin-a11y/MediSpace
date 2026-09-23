@@ -25,4 +25,11 @@ public interface TurnoService {
     TurnoResponseDTO obtenerTurno(Integer id);
     List<TurnoResponseDTO> listarTurnos(Integer idMedico, Integer idPaciente, String estado, LocalDate fecha, List<Integer> idsMedico);
     void eliminarTurno(Integer id);
+
+    /**
+     * RF-T8 / RN-021: cancela en lote los turnos futuros de un médico para un día (o rango de días,
+     * ej. vacaciones). Los DISPONIBLE y los RESERVADO/EN_ESPERA pasan a "CANCELADO"; los ATENDIDO y
+     * los ya cerrados no se tocan. Devuelve la lista de pacientes con turno reservado para contactarlos.
+     */
+    CancelacionDiaResponseDTO cancelarDiaMedico(CancelarDiaMedicoDTO dto);
 }

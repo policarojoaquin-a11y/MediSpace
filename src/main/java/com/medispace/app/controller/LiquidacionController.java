@@ -1,16 +1,19 @@
 package com.medispace.app.controller;
 
+import com.medispace.app.dto.facturacion.AnularLiquidacionDTO;
 import com.medispace.app.dto.facturacion.GenerarLiquidacionDTO;
 import com.medispace.app.dto.facturacion.LiquidacionResponseDTO;
 import com.medispace.app.security.MedicoAccessGuard;
 import com.medispace.app.service.LiquidacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,8 +33,9 @@ public class LiquidacionController {
 
     @PutMapping("/{id}/anular")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<LiquidacionResponseDTO> anularLiquidacion(@PathVariable Integer id) {
-        LiquidacionResponseDTO response = liquidacionService.anularLiquidacion(id);
+    public ResponseEntity<LiquidacionResponseDTO> anularLiquidacion(
+            @PathVariable Integer id, @RequestBody AnularLiquidacionDTO dto) {
+        LiquidacionResponseDTO response = liquidacionService.anularLiquidacion(id, dto.getMotivo());
         return ResponseEntity.ok(response);
     }
 
@@ -43,9 +47,28 @@ public class LiquidacionController {
         return ResponseEntity.ok(liquidacionService.listarLiquidacionesPorMedico(idMedico));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('MEDICO')")
+    public ResponseEntity<List<LiquidacionResponseDTO>> listarMisLiquidaciones(Authentication authentication) {
+        Integer idMedico = medicoAccessGuard.idMedicoPropioSiAplica(authentication);
+        return ResponseEntity.ok(liquidacionService.listarLiquidacionesPorMedico(idMedico));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO')")
+    public ResponseEntity<List<LiquidacionResponseDTO>> buscarLiquidaciones(
+            @RequestParam(required = false) Integer idMedico,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(liquidacionService.buscarLiquidaciones(idMedico, desde, hasta));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO', 'MEDICO')")
-    public ResponseEntity<LiquidacionResponseDTO> obtenerLiquidacion(@PathVariable Integer id) {
-        return ResponseEntity.ok(liquidacionService.obtenerLiquidacion(id));
+    public ResponseEntity<LiquidacionResponseDTO> obtenerLiquidacion(
+            @PathVariable Integer id, Authentication authentication) {
+        LiquidacionResponseDTO response = liquidacionService.obtenerLiquidacion(id);
+        medicoAccessGuard.verificarAccesoPropio(response.getIdMedico(), authentication);
+        return ResponseEntity.ok(response);
     }
 }

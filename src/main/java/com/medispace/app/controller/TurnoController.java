@@ -42,10 +42,15 @@ public class TurnoController {
         return ResponseEntity.ok(response);
     }
 
+    // Hallazgo 2 (checklist 27/08): un MEDICO solo puede pedir por id un turno propio —
+    // mismo guard de ownership que ya aplica PUT /{id}/estado. Sin esto, un médico podía leer
+    // datos del turno y del paciente de otro médico.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO', 'MEDICO')")
-    public ResponseEntity<TurnoResponseDTO> obtenerTurno(@PathVariable Integer id) {
-        return ResponseEntity.ok(turnoService.obtenerTurno(id));
+    public ResponseEntity<TurnoResponseDTO> obtenerTurno(@PathVariable Integer id, Authentication authentication) {
+        TurnoResponseDTO turno = turnoService.obtenerTurno(id);
+        medicoAccessGuard.verificarAccesoPropio(turno.getIdMedico(), authentication);
+        return ResponseEntity.ok(turno);
     }
 
     @GetMapping
@@ -72,5 +77,22 @@ public class TurnoController {
     public ResponseEntity<Void> eliminarTurno(@PathVariable Integer id) {
         turnoService.eliminarTurno(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // RF-T8: cancelar un día completo (o rango) de la agenda de un médico — ej. vacaciones/licencia.
+    // Un MEDICO solo puede cancelar días propios: su idMedico se resuelve desde el JWT y se ignora
+    // el que venga en el body (mismo criterio que GET /api/turnos con idMedico).
+    @PostMapping("/cancelar-dia")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRATIVO', 'MEDICO')")
+    public ResponseEntity<CancelacionDiaResponseDTO> cancelarDiaMedico(
+            @RequestBody CancelarDiaMedicoDTO dto,
+            Authentication authentication) {
+        Integer idMedicoPropio = medicoAccessGuard.idMedicoPropioSiAplica(authentication);
+        if (idMedicoPropio != null) {
+            dto.setIdMedico(idMedicoPropio);
+        } else {
+            medicoAccessGuard.verificarAccesoPropio(dto.getIdMedico(), authentication);
+        }
+        return ResponseEntity.ok(turnoService.cancelarDiaMedico(dto));
     }
 }

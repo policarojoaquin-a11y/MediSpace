@@ -39,7 +39,13 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     List<Turno> findByFechaHoraBetween(LocalDateTime desde, LocalDateTime hasta);
 
-    // RN-016: Turnos Atendido de un médico en un período que no tienen ningún Cobro asociado
+    // Turnos futuros con paciente real (RESERVADO / EN_ESPERA) en un consultorio — para avisar
+    // (no bloquear) al cambiar el estado de ese consultorio (checklist 27/08).
+    @Query(value = "SELECT COUNT(*) FROM Turnos WHERE ID_Consultorio = :idConsultorio " +
+            "AND Fecha_Hora > GETDATE() AND Estado IN ('RESERVADO', 'EN_ESPERA') AND Visible = 1", nativeQuery = true)
+    long countPendientesFuturosPorConsultorio(@Param("idConsultorio") Integer idConsultorio);
+
+    // RN-018: Turnos Atendido de un médico en un período que no tienen ningún Cobro asociado
     @Query("SELECT COUNT(t) FROM Turno t WHERE t.medico.idMedico = :idMedico " +
             "AND t.estado = 'ATENDIDO' AND t.fechaHora BETWEEN :desde AND :hasta " +
             "AND NOT EXISTS (SELECT c FROM Cobro c WHERE c.turno = t)")

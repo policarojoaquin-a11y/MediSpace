@@ -295,6 +295,10 @@
   border-bottom: 2px solid var(--azul);
   padding: 10px 14px;
 }
+.turno-column-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.turno-column-header .btn-icon { width: 26px; height: 26px; flex-shrink: 0; background: rgba(255, 255, 255, .55); }
+.cancelar-dia-lista { margin: 6px 0 0; padding-left: 18px; }
+.cancelar-dia-lista li { margin: 2px 0; }
 .turno-column.completa .turno-column-header {
   background: var(--rojo-light);
   border-bottom-color: var(--rojo);
@@ -311,11 +315,11 @@
 .turno-column.completa .turno-column-stats { color: var(--rojo-dim); font-weight: 600; }
 .turno-column-body { flex: 1; overflow-y: auto; }
 .turno-column-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
-.turno-column-table col.col-hora     { width: 52px; }
-.turno-column-table col.col-dot      { width: 16px; }
+.turno-column-table col.col-hora     { width: 44px; }
+.turno-column-table col.col-dot      { width: 14px; }
 .turno-column-table col.col-paciente { width: auto; }
-.turno-column-table col.col-telefono { width: 70px; }
-.turno-column-table col.col-accion   { width: 30px; }
+.turno-column-table col.col-telefono { width: 52px; }
+.turno-column-table col.col-accion   { width: 88px; }
 .turno-column-table thead th {
   padding: 6px 8px; font-size: 9.5px; text-align: left;
   color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: .5px;
@@ -340,10 +344,83 @@
 .turno-row-cancelado   .turno-estado-dot,
 .turno-row-no-asistio  .turno-estado-dot { background: var(--rojo-light); border: 1px solid var(--rojo); }
 .turno-row-cancelado, .turno-row-no-asistio { opacity: .55; }
-.turno-col-accion { text-align: center; overflow: visible; }
+.turno-col-accion { text-align: right; overflow: visible; padding-left: 2px; padding-right: 4px; }
+.turno-acciones { display: flex; gap: 2px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+.turno-col-accion .btn-icon { width: 24px; height: 24px; }
+.turno-col-accion .btn-icon svg { width: 12px; height: 12px; }
+.turno-cobrado { font-size: 11px; font-weight: 700; color: var(--verde); font-family: var(--font-mono); padding: 0 2px; }
 .turno-row-dim { opacity: .3; }
 .turno-row-highlight { background: var(--amarillo-light); }
 .turno-row-highlight:hover { background: var(--amarillo-light); }
+
+/* ========================
+   MI CARTILLA — autogestión del médico
+   (Mis Prestaciones · Mis Datos → obras sociales / coseguro)
+   Tablas de lectura + edición puntual en línea o por modal, con el
+   mismo lenguaje visual que el resto de los módulos.
+   ======================== */
+.cartilla-card { max-width: 900px; }
+.cartilla-card + .cartilla-card { margin-top: var(--sp-5); }
+
+.form-hint {
+  font-size: var(--fz-xs); color: var(--clr-text-muted);
+  margin: 2px 0 var(--sp-3); line-height: 1.45;
+}
+
+/* Datos personales de solo lectura como lista de definición, no inputs falsos */
+.datos-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4) var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+.datos-grid dt {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  color: var(--clr-text-muted); margin-bottom: 3px;
+}
+.datos-grid dd { font-size: var(--fz-base); color: var(--clr-text); }
+.datos-grid dd.mono { font-family: var(--font-mono); }
+
+/* Celdas numéricas de las tablas de cartilla */
+td.num-cell { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num-cell .muted { color: var(--clr-text-muted); }
+
+/* Input compacto dentro de una celda (coseguro editable en línea) */
+.cell-input {
+  width: 130px; max-width: 100%;
+  min-height: 34px; padding: 5px 9px;
+  border: 1px solid var(--gris-borde); border-radius: var(--r-xs);
+  font-family: var(--font-mono); font-size: var(--fz-sm);
+  background: var(--blanco); color: var(--clr-text); outline: none;
+  transition: border-color var(--tx-fast), box-shadow var(--tx-fast);
+}
+.cell-input:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(26,82,118,.15); }
+
+/* Barra de "agregar" compacta debajo de una tabla de cartilla */
+.cartilla-addbar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3);
+  margin-top: var(--sp-4); padding-top: var(--sp-4);
+  border-top: 1px dashed var(--gris-borde-2);
+}
+.cartilla-addbar .form-group { gap: 4px; }
+.cartilla-addbar .form-group label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  color: var(--clr-text-muted);
+}
+.cartilla-addbar .form-group input,
+.cartilla-addbar .form-group select { min-height: 38px; }
+.cartilla-addbar .os-field { flex: 1 1 220px; }
+.cartilla-addbar .cos-field { flex: 0 1 150px; }
+
+/* Acciones por fila en tablas de cartilla: iconos alineados a la derecha */
+td.cartilla-acciones { white-space: nowrap; text-align: right; }
+td.cartilla-acciones > * + * { margin-left: 6px; }
+td.cartilla-acciones .btn-icon { width: 30px; height: 30px; vertical-align: middle; }
+td.cartilla-acciones .btn-sm { min-height: 30px; vertical-align: middle; }
+
+@media (max-width: 640px) {
+  .cartilla-addbar .os-field,
+  .cartilla-addbar .cos-field { flex-basis: 100%; }
+}
 
 /* ========================
    RESPONSIVE

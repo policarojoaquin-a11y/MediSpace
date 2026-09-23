@@ -49,7 +49,7 @@ public class ArrendamientoServiceTest {
     @BeforeEach
     void setUp() {
         medico = Medico.builder().idMedico(1).nombre("Dr. Lopez").build();
-        consultorio = Consultorio.builder().idConsultorio(1).numeroConsultorio("101").build();
+        consultorio = Consultorio.builder().idConsultorio(1).numeroConsultorio("101").estado("DISPONIBLE").build();
     }
 
     @Test
@@ -115,6 +115,52 @@ public class ArrendamientoServiceTest {
 
         assertTrue(ex.getMessage().contains("RN-013"));
         assertTrue(ex.getMessage().contains("superpone"));
+    }
+
+    @Test
+    void testRN022_ConsultorioNoDisponibleRechazado() {
+        consultorio.setEstado("EN_MANTENIMIENTO");
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medico));
+        when(consultorioRepository.findById(1)).thenReturn(Optional.of(consultorio));
+
+        ArrendamientoCreateDTO dto = ArrendamientoCreateDTO.builder()
+                .idMedico(1)
+                .idConsultorio(1)
+                .fechaInicio(LocalDate.now())
+                .diaSemana("LUNES")
+                .horaInicio(LocalTime.of(9, 0))
+                .horaFin(LocalTime.of(13, 0))
+                .build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                arrendamientoService.crearArrendamiento(dto));
+
+        assertTrue(ex.getMessage().contains("RN-022"));
+        verify(arrendamientoRepository, never()).save(any());
+        verify(turnoService, never()).generarTurnosParaContrato(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void testRN023_SuperposicionMedicoEnOtroConsultorioRechazada() {
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medico));
+        when(consultorioRepository.findById(1)).thenReturn(Optional.of(consultorio));
+        when(arrendamientoRepository.countSuperposicionesConsultorio(any(), any(), any(), any(), any(), any())).thenReturn(0L);
+        when(arrendamientoRepository.countSuperposicionesMedico(any(), any(), any(), any(), any(), any())).thenReturn(1L);
+
+        ArrendamientoCreateDTO dto = ArrendamientoCreateDTO.builder()
+                .idMedico(1)
+                .idConsultorio(1)
+                .fechaInicio(LocalDate.now())
+                .diaSemana("LUNES")
+                .horaInicio(LocalTime.of(9, 0))
+                .horaFin(LocalTime.of(13, 0))
+                .build();
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                arrendamientoService.crearArrendamiento(dto));
+
+        assertTrue(ex.getMessage().contains("RN-023"));
+        verify(arrendamientoRepository, never()).save(any());
     }
 
     @Test

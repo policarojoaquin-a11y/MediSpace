@@ -134,4 +134,64 @@ public class CierreDiarioServiceTest {
         verify(cierreDiarioRepository).save(captor.capture());
         assertNull(captor.getValue().getArrendamiento());
     }
+
+    @Test
+    void testBUG003_FacturaAnuladaNoSumaAlCierre() {
+        Facturacion pagada = Facturacion.builder()
+                .importeTotal(new BigDecimal("1000.00"))
+                .porcentajeMedico(new BigDecimal("70.00"))
+                .porcentajeConsultorio(new BigDecimal("30.00"))
+                .estadoPago("PAGADO").build();
+        Facturacion anulada = Facturacion.builder()
+                .importeTotal(new BigDecimal("1000.00"))
+                .porcentajeMedico(new BigDecimal("70.00"))
+                .porcentajeConsultorio(new BigDecimal("30.00"))
+                .estadoPago("ANULADO").build();
+
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medico));
+        when(consultorioRepository.findById(1)).thenReturn(Optional.of(consultorio));
+        when(facturacionRepository.findByMedicoIdMedicoAndFechaFacturacionBetween(eq(1), any(), any()))
+                .thenReturn(List.of(pagada, anulada));
+        when(arrendamientoModuloRepository.findContratoVigentePorFecha(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(cierreDiarioRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+
+        CierreDiarioRequestDTO dto = CierreDiarioRequestDTO.builder()
+                .idMedico(1).idConsultorio(1).fecha(LocalDate.now()).build();
+
+        CierreDiarioResponseDTO response = cierreDiarioService.generarCierreDiario(dto);
+
+        assertEquals(new BigDecimal("1000.00"), response.getTotalFacturadoDia(),
+                "La factura ANULADA no debe sumar (esperado 1000, no 2000)");
+        assertEquals(1, response.getCantidadTurnos());
+    }
+
+    @Test
+    void testRN025_CierreUsaLoCobradoEnManoNoElTotal() {
+        // Consulta $4.800, obra social cubre $20 (importeCopago = 4780, lo que paga el paciente
+        // en mano). El cierre de caja debe reflejar 4780, no 4800.
+        Facturacion factura = Facturacion.builder()
+                .importeTotal(new BigDecimal("4800.00"))
+                .importeCopago(new BigDecimal("4780.00"))
+                .porcentajeMedico(new BigDecimal("70.00"))
+                .porcentajeConsultorio(new BigDecimal("30.00"))
+                .estadoPago("PAGADO").build();
+
+        when(medicoRepository.findById(1)).thenReturn(Optional.of(medico));
+        when(consultorioRepository.findById(1)).thenReturn(Optional.of(consultorio));
+        when(facturacionRepository.findByMedicoIdMedicoAndFechaFacturacionBetween(eq(1), any(), any()))
+                .thenReturn(List.of(factura));
+        when(arrendamientoModuloRepository.findContratoVigentePorFecha(any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(cierreDiarioRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+
+        CierreDiarioRequestDTO dto = CierreDiarioRequestDTO.builder()
+                .idMedico(1).idConsultorio(1).fecha(LocalDate.now()).build();
+
+        CierreDiarioResponseDTO response = cierreDiarioService.generarCierreDiario(dto);
+
+        assertEquals(new BigDecimal("4780.00"), response.getTotalFacturadoDia());
+        assertEquals(new BigDecimal("3346.00"), response.getImporteMedico());
+        assertEquals(new BigDecimal("1434.00"), response.getImporteConsultorio());
+    }
 }

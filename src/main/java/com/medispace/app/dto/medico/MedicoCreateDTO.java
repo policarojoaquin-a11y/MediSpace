@@ -21,6 +21,6 @@ public class MedicoCreateDTO {
     private BigDecimal importeConsulta;
     private LocalDate fechaInicioActividad;
     private String email;
-    private List<Integer> idsObrasSociales;
+    private List<MedicoObraSocialDTO> obrasSociales;
     private List<MedicoPrestacionDTO> prestaciones;
 }

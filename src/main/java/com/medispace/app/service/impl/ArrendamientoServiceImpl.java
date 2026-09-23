@@ -49,6 +49,14 @@ public class ArrendamientoServiceImpl implements ArrendamientoService {
             throw new BusinessRuleException("El día de la semana es obligatorio.");
         }
 
+        // RN-022: No se puede contratar un consultorio que no está Disponible (Bloqueado, En
+        // mantenimiento, Fuera de servicio). Sin este chequeo se podían generar turnos
+        // "Disponible" reservables en un consultorio fuera de servicio.
+        if (!"DISPONIBLE".equalsIgnoreCase(consultorio.getEstado())) {
+            throw new BusinessRuleException(
+                    "RN-022: El consultorio no está Disponible (estado actual: " + consultorio.getEstado() + "). No se puede asignar un contrato de arrendamiento.");
+        }
+
         // RN-013: Verificar que no haya superposición horaria para ese consultorio, ese día
         long superposiciones = arrendamientoRepository.countSuperposicionesConsultorio(
                 dto.getIdConsultorio(), dto.getDiaSemana(), dto.getFechaInicio(), dto.getFechaFin(),
@@ -56,6 +64,19 @@ public class ArrendamientoServiceImpl implements ArrendamientoService {
         if (superposiciones > 0) {
             throw new BusinessRuleException(
                     "RN-013: El consultorio ya tiene un contrato activo que se superpone con el día/horario/período solicitado.");
+        }
+
+        // RN-023: Un médico no puede tener 2 contratos activos que se superpongan en
+        // día/horario, ni siquiera en consultorios distintos (no puede atender en dos lugares a
+        // la vez). Sin este chequeo, un segundo contrato "exitoso" (201) podía terminar
+        // generando 0 turnos reales de forma silenciosa (la deduplicación de turnos por
+        // médico+fecha_hora descartaba los del segundo contrato sin avisar).
+        long superposicionesMedico = arrendamientoRepository.countSuperposicionesMedico(
+                dto.getIdMedico(), dto.getDiaSemana(), dto.getFechaInicio(), dto.getFechaFin(),
+                dto.getHoraInicio(), dto.getHoraFin());
+        if (superposicionesMedico > 0) {
+            throw new BusinessRuleException(
+                    "RN-023: El médico ya tiene otro contrato activo que se superpone con el día/horario/período solicitado (en otro consultorio).");
         }
 
         Integer duracionTurnoMin = dto.getDuracionTurnoMin() != null ? dto.getDuracionTurnoMin() : DURACION_TURNO_DEFAULT_MIN;

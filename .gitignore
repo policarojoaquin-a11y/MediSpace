@@ -24,3 +24,11 @@ docs/run_log.txt
 
 # graphify-ts
 graphify-out/
+
+# Adjuntos de Historia Clínica subidos localmente (ver medispace.uploads.dir)
+/uploads/
+
+# Artefactos de compilación de qa/e2e (standalone Playwright, no Maven)
+qa/e2e/bin/
+qa/e2e/cp.txt
+qa/screenshots/*.png

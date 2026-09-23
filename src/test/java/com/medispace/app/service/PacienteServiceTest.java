@@ -62,13 +62,13 @@ public class PacienteServiceTest {
         });
 
         assertTrue(ex.getMessage().contains("RN-009"));
-        assertTrue(ex.getMessage().contains("El DNI ya se encuentra registrado"));
+        assertTrue(ex.getMessage().contains("El documento (DNI / Pasaporte) ya se encuentra registrado"));
     }
 
     @Test
     void testRN008_DniInmutableDebeFallarSiSeIntentaCambiar() {
         PacienteUpdateDTO dto = PacienteUpdateDTO.builder()
-                .dni("87654321") // DNI diferente al original ("12345678")
+                .dni("87654321") // documento diferente al original ("12345678")
                 .build();
 
         when(pacienteRepository.findById(1)).thenReturn(Optional.of(pacienteGuardado));
@@ -78,13 +78,32 @@ public class PacienteServiceTest {
         });
 
         assertTrue(ex.getMessage().contains("RN-008"));
-        assertTrue(ex.getMessage().contains("El DNI del paciente es inmutable"));
+        assertTrue(ex.getMessage().contains("El documento (DNI / Pasaporte) del paciente es inmutable"));
+    }
+
+    @Test
+    void testRN008_PasaporteDeExtranjeroSeAceptaComoDocumento() {
+        // Un paciente extranjero sin DNI argentino se carga con el N° de pasaporte en el mismo
+        // campo (Entrega §2). No hay validación de formato — cualquier string único es válido.
+        PacienteCreateDTO dto = PacienteCreateDTO.builder()
+                .nombre("John").apellido("Smith")
+                .dni("AB1234567") // pasaporte
+                .fechaNacimiento(java.time.LocalDate.of(1990, 5, 20))
+                .build();
+
+        when(pacienteRepository.countByDniIncludingInactive("AB1234567")).thenReturn(0L);
+        when(pacienteRepository.save(any(Paciente.class))).thenAnswer(i -> i.getArgument(0));
+
+        PacienteResponseDTO res = pacienteService.crearPaciente(dto);
+
+        assertEquals("AB1234567", res.getDni());
+        verify(historiaClinicaRepository, times(1)).save(any());
     }
 
     @Test
     void testRN008_ActualizacionExitosaSinCambiarDNI() {
         PacienteUpdateDTO dto = PacienteUpdateDTO.builder()
-                .dni("12345678") // Mismo DNI
+                .dni("12345678") // Mismo documento
                 .nombre("Juan Modificado")
                 .build();
 

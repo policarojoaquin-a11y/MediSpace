@@ -183,9 +183,20 @@ h1, h2, h3, .font-display {
 
 .btn-sm { min-height: 32px; padding: 0 13px; font-size: var(--fz-xs); }
 
+/* Campo de formulario de solo lectura (p. ej. DNI en edición de paciente — RN-008). */
+input.input-readonly {
+  background: var(--gris-claro);
+  color: var(--clr-text-muted);
+  cursor: not-allowed;
+}
+
 .btn-group { display: inline-flex; gap: 0; border-radius: var(--r-sm); overflow: hidden; }
 .btn-group .btn { border-radius: 0; }
 .btn-group .btn.active { background: var(--clr-primary); color: #fff; border-color: var(--clr-primary); }
+/* Botón secundario marcado como "selección activa" fuera de un .btn-group (p. ej. el
+   selector de reporte en pantalla). */
+.btn-secondary.active { background: var(--azul); color: #fff; border-color: var(--azul); }
+.btn-secondary.active:hover { background: var(--azul-dim); border-color: var(--azul-dim); }
 .btn-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border-radius: var(--r-xs);
